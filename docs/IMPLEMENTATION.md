@@ -11,7 +11,7 @@ At each code phase: compile backend, run unit/architecture and relevant real-inf
 | Phase | Deliverable / acceptance evidence | Status |
 | --- | --- | --- |
 | 0 | Version matrix, modules, schema, financial invariants, failure/API contracts, ADRs, review | Complete (design only) |
-| 1 | Gradle wrapper/Boot health + Flyway baseline/PostgreSQL container, React shell, CI; clean builds and health integration test | Pending |
+| 1 | Gradle wrapper/Boot health + Flyway baseline/PostgreSQL container, React shell, CI; clean builds and health integration test | Complete |
 | 2 | Identity/merchant/RBAC and keys foundations; login/refresh/revoke/tenant-isolation tests | Pending |
 | 3 | Restricted DB posting function, balanced immutable ledger/projection; malformed/append/mutate/rollback tests | Pending |
 | 4 | Wallet/funding/transfer/idempotency; 100-request spending and duplicate races | Pending |
@@ -27,6 +27,10 @@ At each code phase: compile backend, run unit/architecture and relevant real-inf
 | 14 | Full clean build/test/start/seed/E2E verification, docs audit, interview/resume | Pending |
 
 ## Test design
+
+Phase 1 evidence (2026-09-25, Windows/Docker Desktop): Gradle 9.8.0 `build --write-locks` passed using Java 25.0.1; 1 architecture test and 2 PostgreSQL 18.6 integration tests passed. Flyway 12.4.0 migrated a fresh database; Boot 4.1.1/Hibernate 7.4.5 started and readiness was UP; private routes returned 401. Frontend lint/typecheck, 2 Vitest/RTL tests and Vite production build passed with verified Node 24.21.0. Compose config validated with events profile. CI authored, not executed remotely. No Kafka/Redis functional integration claimed yet.
+
+Resolved compatibility issues: TypeScript 7 was outside ESLint peer support (pin 6.0.3); jsdom requires newer Node 24 (pin 24.21.0); host JAVA_HOME referred to removed JDK 24; malformed host PATH quotes interfered with Testcontainers fallback detection; legacy host timezone Asia/Calcutta was rejected by PostgreSQL image (run JVM/tests in UTC). All fixes avoid lowering compilation strictness or skipping integration tests.
 
 Phase 0 checks: local Markdown links resolve; `git diff --check` passes. Official registry metadata confirms stable Boot 4.1.1 (4.2.0-M2 excluded), Gradle 9.8.0, Modulith 2.1.1, springdoc 3.1.1, ArchUnit 1.5.0 and the README npm versions. Adoptium reports Java 25.0.4+101; Redis release API reports 8.10.2. Gradle distribution downloaded and SHA-256 verified. No application/test compilation applies to the documentation-only phase. Framework compatibility is documented, runtime compatibility remains a Phase 1 gate.
 

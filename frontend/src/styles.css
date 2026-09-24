@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+:root { font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: #203735; background: #f5f6f2; font-synthesis: none; text-rendering: optimizeLegibility; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+button, a { -webkit-tap-highlight-color: transparent; }
+a { color: inherit; text-decoration: none; }
+button:focus-visible, a:focus-visible { outline: 3px solid #51a28e; outline-offset: 4px; }
+.app-shell { display: flex; min-height: 100vh; }
+aside { width: 244px; background: #142b2b; color: #d4e2dc; padding: 32px 24px; display: flex; flex-direction: column; }
+.brand { display: flex; gap: 12px; align-items: center; color: white; font-size: 23px; font-weight: 650; letter-spacing: -1px; }
+.brand-icon { display: grid; place-items: center; width: 35px; height: 35px; border: 1px solid #709d89; border-radius: 10px; color: #c5e4b9; font-family: Georgia, serif; }
+.nav-label, .eyebrow { text-transform: uppercase; letter-spacing: 1.8px; font-size: 10px; font-weight: 650; }
+.nav-label { margin: 55px 10px 16px; color: #86a59b; }
+.nav-link { display: flex; justify-content: space-between; padding: 13px 14px; border-radius: 7px; background: #284440; color: #e5efdc; font-size: 14px; }
+.sidebar-note { margin-top: auto; padding-top: 80px; font-size: 11px; color: #b2c6ba; }
+.sidebar-note p { color: #8fa89f; line-height: 1.7; margin-top: 10px; }
+.dot { display: inline-block; width: 6px; height: 6px; background: #aacb83; border-radius: 50%; margin-right: 5px; }
+main { flex: 1; min-width: 0; }
+header { height: 78px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e0e5dc; padding: 0 46px; font-size: 12px; color: #77847c; }
+.badge { border: 1px solid #dbb961; color: #8b6d25; background: #f7efd7; font-size: 9px; letter-spacing: 1px; padding: 5px 9px; border-radius: 4px; }
+.content { padding: 44px 46px; max-width: 1450px; margin: 0 auto; }
+.page-heading { display: flex; justify-content: space-between; align-items: center; gap: 24px; margin-bottom: 34px; }
+.eyebrow { color: #7b8d80; margin: 0 0 12px; }
+h1 { font-size: clamp(25px, 2.5vw, 35px); letter-spacing: -1.2px; font-weight: 500; margin: 0; line-height: 1.2; }
+.environment { font-size: 11px; white-space: nowrap; color: #69806e; }
+.hero { background: #e4eadc; border: 1px solid #d6dfcb; border-radius: 12px; padding: 37px; display: flex; justify-content: space-between; align-items: center; gap: 30px; }
+h2 { font-size: 22px; font-weight: 550; letter-spacing: -.5px; margin: 0 0 12px; }
+.hero p:not(.eyebrow) { font-size: 13px; color: #667762; line-height: 1.9; max-width: 530px; margin: 0; }
+.ledger-mark { flex-shrink: 0; display: flex; gap: 20px; align-items: center; padding: 20px 15px; color: #738866; font-family: Georgia, serif; font-size: 29px; }
+.ledger-mark span { border-top: 1px solid #9caf8d; border-bottom: 3px double #9caf8d; padding: 18px 8px; }
+.ledger-mark i { font-style: normal; font-size: 20px; }
+.status-panel { margin-top: 25px; border: 1px solid #dfe5db; border-radius: 12px; background: #fff; padding: 29px 32px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 24px; }
+.status-panel h2 { font-size: 18px; }
+.status-panel p:not(.eyebrow) { font-size: 12px; color: #7d8a7d; }
+.status-action { display: flex; align-items: center; gap: 20px; }
+.status { color: #9b7435; font-size: 12px; }
+.status.up { color: #367d59; }
+button { cursor: pointer; background: #213f35; border: 1px solid #213f35; color: white; border-radius: 6px; padding: 10px 14px; font: inherit; font-size: 12px; }
+button:disabled { opacity: .5; cursor: wait; }
+.status-panel .error { flex-basis: 100%; color: #a24932 !important; margin: 0; }
+.footnote { font-size: 11px; color: #8c9789; margin-top: 26px; }
+@media (max-width: 850px) { aside { width: 190px; padding: 25px 18px; } header { padding: 0 24px; } .content { padding: 30px 24px; } .page-heading { align-items: flex-start; flex-direction: column; gap: 14px; } .ledger-mark { display: none; } .hero { padding: 26px; } }
+@media (max-width: 580px) { .app-shell { flex-direction: column; } aside { width: 100%; padding: 20px; } .nav-label, .sidebar-note, nav { display: none; } header { height: 58px; } .content { padding: 25px 20px; } .status-panel { padding: 23px; } }

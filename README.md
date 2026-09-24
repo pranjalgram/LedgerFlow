@@ -2,7 +2,7 @@
 
 A simulated payment, wallet, and double-entry ledger platform being developed as a modular Java application. No real money, bank integration, or payment credentials are involved.
 
-**Status: Phase 0 architecture design. No application functionality is implemented yet.** Documents describe intended behavior, not verified capabilities. See [implementation status](docs/IMPLEMENTATION.md) for phase gates and evidence.
+**Status: architecture and tested foundation complete. Financial features are not implemented yet.** The backend runs against PostgreSQL with Flyway, protected routes and health probes. The React shell displays live readiness. See [implementation status](docs/IMPLEMENTATION.md) for phase gates and evidence; design documents describe the target behavior.
 
 ## Engineering focus
 
@@ -45,9 +45,9 @@ Verified against official release documentation, Maven Central metadata/BOM, and
 | PostgreSQL server | 18.6 |
 | Kafka broker | 4.3.1, KRaft |
 | Redis | 8.10.2 (official GitHub latest release) |
-| Node | 24 LTS; local installation 24.11.1 |
+| Node | 24.21.0 LTS; >=24.15 required by jsdom; original host 24.11.1 is too old |
 | React / React DOM | 19.3.0 |
-| TypeScript / Vite / React plugin | 7.0.2 / 8.3.1 / 6.1.1 |
+| TypeScript / Vite / React plugin | 6.0.3 / 8.3.1 / 6.1.1 |
 | React Router / TanStack Query | 7.18.4 / 5.103.2 |
 | React Hook Form / resolvers / Zod | 7.88.0 / 5.9.1 / 4.6.5 |
 | Tailwind / Recharts | 4.3.3 / 3.10.1 |
@@ -55,6 +55,8 @@ Verified against official release documentation, Maven Central metadata/BOM, and
 | ESLint / typescript-eslint | 10.11.0 / 8.70.1 |
 
 Boot supports Java 25; Gradle can run on Java 25 from 9.1 onward. Keep Boot-managed libraries aligned rather than independently selecting their newest versions. The newer broker/older client combination needs a real Kafka container test. npm peer dependency resolution and frontend builds must validate the frontend combination. Observability images will be selected when that phase is implemented.
+
+Compatibility correction during Phase 1: npm's latest TypeScript 7.0.2 is outside typescript-eslint 8.70.1's supported `>=4.8.4 <6.1.0` peer range. Use the current compatible TypeScript 6.0.3 release; do not bypass peer checks with `--force` or `--legacy-peer-deps`.
 
 Sources: [Boot requirements](https://docs.spring.io/spring-boot/system-requirements.html), [Boot BOM](https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-dependencies/4.1.1/spring-boot-dependencies-4.1.1.pom), [Gradle compatibility](https://docs.gradle.org/current/userguide/compatibility.html), [PostgreSQL releases](https://www.postgresql.org/support/versioning/), [Kafka releases](https://kafka.apache.org/community/downloads/), [Redis releases](https://redis.io/docs/latest/operate/oss_and_stack/stack-with-enterprise/release-notes/redisce/), [npm registry](https://registry.npmjs.org/).
 
@@ -71,6 +73,49 @@ Sources: [Boot requirements](https://docs.spring.io/spring-boot/system-requireme
 - [Observability](docs/OBSERVABILITY.md) and [scaling](docs/SCALING.md)
 - [Decisions](docs/DECISIONS.md) and [implementation roadmap](docs/IMPLEMENTATION.md)
 
+## Local development
+
+Prerequisites: Java 25 with valid JAVA_HOME, Node 24.21.0, Docker Compose with Linux containers. Copy `.env.example` to `.env`, choose a local password, and use that same value for POSTGRES_PASSWORD and DB_PASSWORD. Never use these development database-owner credentials in deployment.
+
+```bash
+cp .env.example .env
+# Edit .env before starting. Do not commit it.
+docker compose up -d --wait postgres
+cd backend
+# Export DB_PASSWORD to match .env. Other DB settings have local defaults.
+./gradlew bootRun
+```
+
+Flyway runs on startup; there is no separate `flywayMigrate` Gradle task. `bootRun` and tests use UTC. For a direct jar run use `java -Duser.timezone=UTC -jar build/libs/ledgerflow-0.1.0-SNAPSHOT.jar` and supply DB_PASSWORD. On PowerShell use `Copy-Item .env.example .env`, `$env:DB_PASSWORD = 'your-local-password'`, and `.\gradlew.bat bootRun`. The `.env` file is loaded by Compose, not automatically by a host-run JVM.
+
+In a second terminal:
+
+```bash
+cd frontend
+npm ci
+npm run dev
+```
+
+Open http://localhost:5173. Vite proxies API and readiness calls to localhost:8080. No login or money APIs exist at this phase; all routes other than health are denied. Optional event infrastructure: `docker compose --profile events up -d --wait`. The Kafka/Redis configurations have been syntax-checked; event integration arrives in later phases.
+
+## Verification
+
+```bash
+cd backend
+./gradlew build                 # compile, architecture test, real PostgreSQL tests, jar
+cd ../frontend
+npm run lint
+npm run typecheck
+npm test
+npm run build
+cd ..
+docker compose --env-file .env.example --profile events config --quiet
+```
+
+Docker must be available for backend integration tests; they do not silently skip without it. Testcontainers creates disposable PostgreSQL databases, independent of the Compose database. The initial suite verifies clean migrations, readiness, request IDs and denied private routes. Dependency versions are locked in `backend/gradle.lockfile` and `frontend/package-lock.json`; the Gradle wrapper verifies its distribution checksum. CI runs these checks on Linux; local Windows execution is recorded, CI execution is not yet observed.
+
+If Windows Testcontainers fails while scanning PATH, remove malformed quoted PATH entries in the launching shell. If JAVA_HOME points to a removed JDK, point it to Java 25. For Docker Desktop use the Linux engine; DOCKER_HOST may need `npipe:////./pipe/dockerDesktopLinuxEngine`. No application test uses H2.
+
 ## Current limitations
 
-The repository does not yet have runnable backend/frontend code, migrations, deployment manifests, seed data, screenshots, or benchmark results. Setup instructions, tested API examples, interview explanations, and resume bullets will be added as their underlying functionality is verified. Do not interpret the architecture documents as implementation claims.
+Financial modules, authentication, event workers, deployment images/manifests, seed data, screenshots and benchmark results remain unimplemented. Interview explanations and resume bullets will be added only as their underlying functionality is verified. The shell intentionally contains no mock payment statistics or inactive feature controls. Do not interpret the architecture documents as implementation claims.
