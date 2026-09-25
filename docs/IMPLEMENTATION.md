@@ -19,7 +19,7 @@ At each code phase: compile backend, run unit/architecture and relevant real-inf
 | 6 | Partial/full refunds; concurrent sum limit and insufficient-settlement tests | Complete |
 | 7 | Outbox/Kafka/consumer markers/DLT; publish-crash, duplicate and unresponsive-broker recovery tests | Complete |
 | 8 | Webhook encrypted secrets, approved/pinned destinations, signing, retries/replay; 500/timeout/duplicate tests | Complete |
-| 9 | Snapshot reconciliation persisted reports; injected corruption and repeated-run tests | Pending |
+| 9 | Snapshot reconciliation persisted reports; injected corruption and repeated-run tests | Complete (UI in Phase 10) |
 | 10 | Complete dashboard with server-backed forms, errors/loading/pagination; RTL + Playwright critical flow | Pending |
 | 11 | Metrics/logs/traces and actual provisioned observability verification | Pending |
 | 12 | Runtime images, Compose full workflow, K8s/Helm probes/resources/secret references | Pending |
@@ -70,3 +70,7 @@ Remaining operations work: DLT replay UI, blocked-outbox administrative recovery
 ## Phase 8 verification
 
 Full backend build passed: 8 unit/architecture tests and 32 PostgreSQL/Kafka integration tests. Real HTTP receiver verifies exact-payload HMAC, HTTP 500 retry then 204 success, audited replay, timeout, denied destinations and cross-tenant access. Tests also verify encryption binding, expired-lease fencing, exhausted delivery state and real Kafka fanout. Frontend lint/typecheck/two tests passed. See WEBHOOKS.md for configuration, recovery semantics and limitations. Key rotation, webhook UI and managed egress infrastructure remain later/deployment work.
+
+## Phase 9 verification
+
+Backend build passed with 8 unit/architecture and 36 integration tests. New tests verify repeatable clean reports, concurrent-write snapshots, privileged corruption detection without repair, tenant isolation, active-run exclusion and abandoned-worker fencing. Overview, audit and operational read routes are verified with tenant scoping. Frontend lint/typecheck/two tests passed. See RECONCILIATION.md for full-scan timeout and retention limits; the operations UI belongs to Phase 10.

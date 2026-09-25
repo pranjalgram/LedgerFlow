@@ -56,6 +56,7 @@ abstract class IntegrationSupport {
         registry.add("spring.flyway.password", DATABASE::getPassword);
         registry.add("spring.datasource.hikari.maximum-pool-size", () -> 20);
         registry.add("spring.datasource.hikari.connection-timeout", () -> 10000);
+        registry.add("ledgerflow.reconciliation.enabled", () -> false);
         registry.add("ledgerflow.auth.private-key", () -> KEYS.resolve("private.pem").toUri().toString());
         registry.add("ledgerflow.auth.public-key", () -> KEYS.resolve("public.pem").toUri().toString());
     }
