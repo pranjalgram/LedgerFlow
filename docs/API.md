@@ -41,3 +41,5 @@ Payment request requires `customerWalletId`; optionally resolve `customerId` thr
 All mutating financial endpoints require Idempotency-Key. Creation returns 201 + Location. Confirm returns 200 with terminal outcome; insufficient funds can be FAILED resource state. Invalid state returns 409; validation 400; unauthenticated 401; unauthorized operation 403; cross-tenant/missing resource 404; throttled 429; dependencies/lock exhaustion 503. RFC 9457 problem fields include type, title, status, safe detail, instance, code, correlationId and bounded validation errors. Never return SQL or stack traces.
 
 Lists use limit 1..100 (default 25), opaque cursor over immutable `(created_at,id)` and `nextCursor`. Validate filters and a small sort allowlist; no arbitrary SQL sort fields. Payment filters: status, currency, exact reference, date range. All repository reads carry merchant_id from the security context, never trusted body input. Request IDs are server-generated or validated bounded UUIDs; echo X-Request-Id.
+
+Implemented webhook API details and signature verification: [WEBHOOKS.md](WEBHOOKS.md).

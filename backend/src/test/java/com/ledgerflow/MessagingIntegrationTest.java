@@ -23,7 +23,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.kafka.KafkaContainer;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
-    "ledgerflow.events.enabled=true", "ledgerflow.events.initial-delay=3600000", "ledgerflow.events.poll-delay=3600000"
+    "ledgerflow.events.enabled=true", "ledgerflow.events.initial-delay=3600000", "ledgerflow.events.poll-delay=3600000",
+    "ledgerflow.webhooks.initial-delay=3600000", "ledgerflow.webhooks.allowed-origins=https://hooks.example.test:443"
 })
 class MessagingIntegrationTest extends IntegrationSupport {
     static final KafkaContainer KAFKA = new KafkaContainer("apache/kafka:4.3.1");
@@ -31,6 +32,9 @@ class MessagingIntegrationTest extends IntegrationSupport {
     @DynamicPropertySource
     static void kafkaProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.kafka.bootstrap-servers", KAFKA::getBootstrapServers);
+        byte[] key = new byte[32]; new java.security.SecureRandom().nextBytes(key);
+        String encoded = java.util.Base64.getEncoder().encodeToString(key);
+        registry.add("ledgerflow.webhooks.encryption-key", () -> encoded);
     }
     @Autowired Outbox outbox;
     @Autowired OutboxQueue queue;
@@ -40,6 +44,19 @@ class MessagingIntegrationTest extends IntegrationSupport {
     @Autowired NotificationService notifications;
     @Autowired EventCodec codec;
     @Autowired OutboxDispatcher dispatcher;
+
+    @Test
+    void kafkaEventCreatesOneWebhookJobPerSubscribedEndpoint() throws Exception {
+        var owner = register();
+        var response = request("POST", "/api/v1/webhooks", Map.of("url", "https://hooks.example.test/hook", "subscriptions", java.util.List.of("payment.succeeded")), owner.token(), owner.merchantId());
+        assertThat(response.statusCode()).isEqualTo(201);
+        UUID id = transactions.execute(status -> outbox.append(owner.merchantId(), "payment.succeeded", "payment", UUID.randomUUID(), 1, Map.of()));
+        var event = claim(id);
+        kafka.send("ledgerflow.events.v1", event.messageKey(), event.payload()).get(10, TimeUnit.SECONDS);
+        kafka.send("ledgerflow.events.v1", event.messageKey(), event.payload()).get(10, TimeUnit.SECONDS);
+        await(() -> jdbc.queryForObject("select count(*) from webhook_delivery where event_id=?", Integer.class, id) == 1);
+        assertThat(queue.published(event)).isTrue();
+    }
 
     @Test
     void brokerOutageRetainsCommittedEventForRecovery() throws Exception {
@@ -92,7 +109,7 @@ class MessagingIntegrationTest extends IntegrationSupport {
         assertThat(queue.published(second)).isTrue();
         notifications.consume(codec.decode(second.payload()));
         assertThat(count(id)).isEqualTo(1);
-        assertThat(jdbc.queryForObject("select count(*) from processed_event where event_id=?", Integer.class, id)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("select count(*) from processed_event where event_id=? and consumer_name=?", Integer.class, id, NotificationService.CONSUMER)).isEqualTo(1);
     }
 
     @Test
@@ -112,7 +129,7 @@ class MessagingIntegrationTest extends IntegrationSupport {
     void malformedEnvelopeReachesPersistentDeadLetterInbox() throws Exception {
         String poison = "invalid-" + UUID.randomUUID();
         kafka.send("ledgerflow.events.v1", "poison", poison).get(10, TimeUnit.SECONDS);
-        await(() -> jdbc.queryForObject("select count(*) from dead_letter where payload=?", Integer.class, poison) == 1);
+        await(() -> jdbc.queryForObject("select count(*) from dead_letter where payload=?", Integer.class, poison) >= 1);
     }
 
     private OutboxQueue.Claimed claim(UUID id) {

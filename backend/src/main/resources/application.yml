@@ -68,6 +68,10 @@ logging:
     format:
       console: ecs
 ledgerflow:
+  webhooks:
+    encryption-key: ${WEBHOOK_ENCRYPTION_KEY:}
+    allowed-origins: ${WEBHOOK_ALLOWED_ORIGINS:}
+    allow-local: ${WEBHOOK_ALLOW_LOCAL:false}
   events:
     enabled: ${EVENTS_ENABLED:false}
     topic: ledgerflow.events.v1

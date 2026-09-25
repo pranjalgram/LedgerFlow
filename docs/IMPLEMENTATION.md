@@ -18,7 +18,7 @@ At each code phase: compile backend, run unit/architecture and relevant real-inf
 | 5 | Payment lifecycle/API-key access/ledger capture; invalid transition and replay tests | Complete |
 | 6 | Partial/full refunds; concurrent sum limit and insufficient-settlement tests | Complete |
 | 7 | Outbox/Kafka/consumer markers/DLT; publish-crash, duplicate and unresponsive-broker recovery tests | Complete |
-| 8 | Webhook encrypted secrets, SSRF-safe delivery, signing, retries/replay; 500/timeout/duplicate tests | Pending |
+| 8 | Webhook encrypted secrets, approved/pinned destinations, signing, retries/replay; 500/timeout/duplicate tests | Complete |
 | 9 | Snapshot reconciliation persisted reports; injected corruption and repeated-run tests | Pending |
 | 10 | Complete dashboard with server-backed forms, errors/loading/pagination; RTL + Playwright critical flow | Pending |
 | 11 | Metrics/logs/traces and actual provisioned observability verification | Pending |
@@ -66,3 +66,7 @@ High-value failure tests: crash window after outbox send, consume commit before 
 Backend build passed with 7 unit/architecture tests and 28 PostgreSQL/Kafka integration tests. Five messaging tests cover dispatcher publication order, publish-before-mark crash/lease fencing, consumer transaction rollback, poison-message DLT persistence, and paused-broker recovery. Broker stop/start was not a successful test fixture on this host (advertised address became unreachable); the passing outage test uses Docker pause/unpause. Frontend lint, typecheck, two tests and production build passed. Compose events configuration and diff whitespace checks passed. No benchmark claims.
 
 Remaining operations work: DLT replay UI, blocked-outbox administrative recovery, retention jobs, metrics and tracing. Webhooks, reconciliation and the full dashboard are subsequent phases.
+
+## Phase 8 verification
+
+Full backend build passed: 8 unit/architecture tests and 32 PostgreSQL/Kafka integration tests. Real HTTP receiver verifies exact-payload HMAC, HTTP 500 retry then 204 success, audited replay, timeout, denied destinations and cross-tenant access. Tests also verify encryption binding, expired-lease fencing, exhausted delivery state and real Kafka fanout. Frontend lint/typecheck/two tests passed. See WEBHOOKS.md for configuration, recovery semantics and limitations. Key rotation, webhook UI and managed egress infrastructure remain later/deployment work.
