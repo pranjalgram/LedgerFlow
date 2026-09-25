@@ -9,7 +9,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 class IdentityIntegrationTest extends IntegrationSupport {
@@ -28,7 +28,7 @@ class IdentityIntegrationTest extends IntegrationSupport {
         String hash = jdbc.queryForObject("select password_hash from app_user where id=?", String.class, first.userId());
         assertThat(hash).startsWith("$argon2id$");
         assertThatThrownBy(() -> jdbc.update("delete from audit_event where merchant_id=?", first.merchantId()))
-                .isInstanceOf(DataIntegrityViolationException.class);
+                .isInstanceOf(DataAccessException.class);
     }
 
     @Test

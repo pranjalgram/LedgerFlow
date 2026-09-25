@@ -1,6 +1,6 @@
 # Ledger and money
 
-Status: design; these guarantees require migration and concurrency tests before implementation acceptance.
+Status: posting engine, restricted roles, deferred validation, immutable history, projection and reversal implemented in Phase 3. Wallet spending concurrency is a Phase 4 gate. See IMPLEMENTATION.md for actual test evidence.
 
 ## Units
 

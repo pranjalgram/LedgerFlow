@@ -30,6 +30,7 @@ flowchart TD
   audit --> shared
   outbox --> shared
   ledger --> shared
+  ledger --> merchant
 ```
 
 Business application services may append audit and outbox records via their public APIs and use shared idempotency infrastructure. Those modules must not call business services back. Kafka deserialization uses shared event DTOs rather than business entities. Reconciliation invokes explicit read ports or reporting SQL; it never reaches into a module's repository. Authentication depends on identity's credential interfaces, not merchant implementation internals; merchant services perform membership authorization using authenticated subject IDs.

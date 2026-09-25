@@ -3,7 +3,7 @@ spring:
     name: ledgerflow
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/ledgerflow}
-    username: ${DB_USERNAME:ledgerflow}
+    username: ${DB_USERNAME:ledgerflow_app}
     password: ${DB_PASSWORD}
     hikari:
       maximum-pool-size: 10
@@ -14,6 +14,9 @@ spring:
       ddl-auto: validate
   flyway:
     enabled: true
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/ledgerflow}
+    user: ${DB_MIGRATION_USERNAME:ledgerflow_migrator}
+    password: ${DB_MIGRATION_PASSWORD}
   jackson:
     deserialization:
       fail-on-unknown-properties: true

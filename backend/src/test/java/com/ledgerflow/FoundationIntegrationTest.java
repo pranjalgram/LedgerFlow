@@ -28,8 +28,8 @@ class FoundationIntegrationTest extends IntegrationSupport {
     void cleanDatabaseMigratesAndReadinessReportsUp() throws Exception {
         assertThat(jdbc.queryForObject("select exponent from currency where code = 'INR'", Integer.class))
                 .isEqualTo(2);
-        assertThat(jdbc.queryForObject("select count(*) from flyway_schema_history where success", Long.class))
-                .isEqualTo(2);
+        assertThat(jdbc.queryForObject("select count(*) from flyway_schema_history where not success", Long.class))
+                .isZero();
         var response = get("/actuator/health/readiness");
         assertThat(response.statusCode()).isEqualTo(200);
         assertThat(response.body()).contains("\"status\":\"UP\"").doesNotContain("password", "jdbc:");

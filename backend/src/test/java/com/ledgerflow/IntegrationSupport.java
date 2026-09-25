@@ -9,6 +9,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.security.KeyPairGenerator;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.Map;
@@ -28,13 +30,28 @@ import tools.jackson.databind.ObjectMapper;
 abstract class IntegrationSupport {
     static final PostgreSQLContainer DATABASE = new PostgreSQLContainer("postgres:18.6");
     private static final Path KEYS = keys();
-    static { DATABASE.start(); }
+    private static final String APP_PASSWORD = UUID.randomUUID().toString();
+    static {
+        DATABASE.start();
+        try (var connection = DriverManager.getConnection(DATABASE.getJdbcUrl(), DATABASE.getUsername(), DATABASE.getPassword());
+                var statement = connection.createStatement()) {
+            statement.execute("create role ledgerflow_runtime nologin");
+            statement.execute("create role ledgerflow_ledger_owner nologin");
+            statement.execute("create role ledgerflow_app login password '" + APP_PASSWORD + "'");
+            statement.execute("grant ledgerflow_runtime to ledgerflow_app");
+        } catch (SQLException exception) {
+            throw new ExceptionInInitializerError(exception);
+        }
+    }
 
     @DynamicPropertySource
     static void databaseProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", DATABASE::getJdbcUrl);
-        registry.add("spring.datasource.username", DATABASE::getUsername);
-        registry.add("spring.datasource.password", DATABASE::getPassword);
+        registry.add("spring.datasource.username", () -> "ledgerflow_app");
+        registry.add("spring.datasource.password", () -> APP_PASSWORD);
+        registry.add("spring.flyway.url", DATABASE::getJdbcUrl);
+        registry.add("spring.flyway.user", DATABASE::getUsername);
+        registry.add("spring.flyway.password", DATABASE::getPassword);
         registry.add("ledgerflow.auth.private-key", () -> KEYS.resolve("private.pem").toUri().toString());
         registry.add("ledgerflow.auth.public-key", () -> KEYS.resolve("public.pem").toUri().toString());
     }

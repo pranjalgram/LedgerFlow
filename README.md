@@ -2,7 +2,7 @@
 
 A simulated payment, wallet, and double-entry ledger platform being developed as a modular Java application. No real money, bank integration, or payment credentials are involved.
 
-**Status: architecture, foundation, identity and merchant authorization are implemented and tested. Financial features are not implemented yet.** The backend has registration/login, JWT validation, refresh rotation/revocation, merchant memberships and role enforcement. The React shell displays live readiness. See [implementation status](docs/IMPLEMENTATION.md) for phase gates and evidence; design documents describe the target behavior.
+**Status: architecture, foundation, identity and immutable ledger are implemented and tested. Wallet/payment workflows are next.** The backend has registration/login, JWT validation, refresh rotation/revocation, merchant memberships, role enforcement and a database-enforced posting engine. The React shell displays live readiness. See [implementation status](docs/IMPLEMENTATION.md) for phase gates and evidence; design documents describe the target behavior.
 
 ## Engineering focus
 
@@ -76,7 +76,7 @@ Sources: [Boot requirements](https://docs.spring.io/spring-boot/system-requireme
 
 ## Local development
 
-Prerequisites: Java 25 with valid JAVA_HOME, Node 24.21.0, Docker Compose with Linux containers. Copy `.env.example` to `.env`, choose a local password, and use that same value for POSTGRES_PASSWORD and DB_PASSWORD. Never use these development database-owner credentials in deployment.
+Prerequisites: Java 25 with valid JAVA_HOME, Node 24.21.0, Docker Compose with Linux containers. Copy `.env.example` to `.env`. Choose separate migration/runtime passwords: POSTGRES_PASSWORD must match DB_MIGRATION_PASSWORD, and APP_DB_PASSWORD must match DB_PASSWORD. Runtime connects as restricted ledgerflow_app; Flyway uses ledgerflow_migrator. Compose bootstraps roles on a fresh volume. An existing database needs these roles provisioned explicitly; never delete financial data just to rerun initialization.
 
 ```bash
 cp .env.example .env
@@ -84,11 +84,11 @@ cp .env.example .env
 docker compose up -d --wait postgres
 java scripts/GenerateDevKeys.java
 cd backend
-# Export DB_PASSWORD to match .env. Other DB settings have local defaults.
+# Export DB_PASSWORD and DB_MIGRATION_PASSWORD to match .env.
 ./gradlew bootRun
 ```
 
-Flyway runs on startup; there is no separate `flywayMigrate` Gradle task. `bootRun` and tests use UTC. For a direct jar run use `java -Duser.timezone=UTC -jar build/libs/ledgerflow-0.1.0-SNAPSHOT.jar` and supply DB_PASSWORD. On PowerShell use `Copy-Item .env.example .env`, `$env:DB_PASSWORD = 'your-local-password'`, and `.\gradlew.bat bootRun`. The `.env` file is loaded by Compose, not automatically by a host-run JVM.
+Flyway runs on startup; there is no separate `flywayMigrate` Gradle task. `bootRun` and tests use UTC. For a direct jar run use `java -Duser.timezone=UTC -jar build/libs/ledgerflow-0.1.0-SNAPSHOT.jar` and supply both DB passwords. On PowerShell, `scripts/StartBackend.ps1 -JavaHome 'C:\Program Files\Java\jdk-25'` loads recognized backend variables from `.env`; it never evaluates the file as code. Direct Gradle/JVM runs do not load `.env` automatically. If port 5432 is occupied, set POSTGRES_PORT (for example 55432) and update DB_URL accordingly.
 
 In a second terminal:
 
