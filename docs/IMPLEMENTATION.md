@@ -16,7 +16,7 @@ At each code phase: compile backend, run unit/architecture and relevant real-inf
 | 3 | Restricted DB posting function, balanced immutable ledger/projection; malformed/append/mutate/rollback tests | Complete |
 | 4 | Wallet/funding/transfer/idempotency; 100-request spending and duplicate races | Complete |
 | 5 | Payment lifecycle/API-key access/ledger capture; invalid transition and replay tests | Complete |
-| 6 | Partial/full refunds; concurrent sum limit and insufficient-settlement tests | Pending |
+| 6 | Partial/full refunds; concurrent sum limit and insufficient-settlement tests | Complete |
 | 7 | Outbox/Kafka/consumer markers/DLT; publish-crash, duplicate and broker-down tests | Pending |
 | 8 | Webhook encrypted secrets, SSRF-safe delivery, signing, retries/replay; 500/timeout/duplicate tests | Pending |
 | 9 | Snapshot reconciliation persisted reports; injected corruption and repeated-run tests | Pending |
@@ -27,6 +27,8 @@ At each code phase: compile backend, run unit/architecture and relevant real-inf
 | 14 | Full clean build/test/start/seed/E2E verification, docs audit, interview/resume | Pending |
 
 ## Test design
+
+Phase 6 evidence: backend build passed (7 unit/architecture tests, 23 PostgreSQL integration tests). Refund tests cover multiple partial/full compensation, original payment state/totals, simultaneous 800/700 requests against a 1000 payment (one accepted), concurrent same-key duplicate suppression, cross-tenant denial, settlement liquidity failure with no journal/total change, and stable failure replay after later funding. Deferred database checks enforce refund sum and exact original-account compensation. Frontend lint/typecheck/2 tests pass. Event records are still awaiting the Phase 7 publisher.
 
 Phase 5 evidence: backend build passed (6 unit/architecture tests, 19 PostgreSQL integration tests). A merchant API key creates/confirms/replays a payment without a tenant header; successful capture posts once, changes exact balances and records its lifecycle. Tests cover two concurrent confirmations (one success, one conflict), failed/cancelled payments with no posting, key hashing, once-only secret exposure, read-only scope, key revocation, denied key access to dashboard administration, and cross-tenant reads. Frontend checks still pass. API keys use Spring Security's bearer authentication manager dispatch, not a handwritten servlet authentication filter. Refund workflows and event delivery remain pending.
 

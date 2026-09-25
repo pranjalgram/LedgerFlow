@@ -9,4 +9,5 @@ public record Payment(UUID id, UUID customerWalletId, UUID settlementWalletId, l
                       Money.Currency currency, String reference, Map<String, String> metadata, PaymentState status,
                       String failureCode, UUID ledgerTransactionId, long version, Instant createdAt, Instant updatedAt) {
     public Payment { metadata = Map.copyOf(metadata); }
+    public RefundBudget refundBudget() { return new RefundBudget(amount, refundedAmount, status); }
 }

@@ -16,7 +16,7 @@ class ArchitectureTest {
                 .importPackages("com.ledgerflow");
         noFields().should().beAnnotatedWith(Autowired.class).allowEmptyShould(true).check(classes);
         slices().matching("com.ledgerflow.(*)..").should().beFreeOfCycles().check(classes);
-        for (String module : new String[]{"identity", "merchant", "audit", "ledger", "wallet", "outbox", "payment"}) {
+        for (String module : new String[]{"identity", "merchant", "audit", "ledger", "wallet", "outbox", "payment", "refund"}) {
             noClasses().that().resideOutsideOfPackage("com.ledgerflow." + module + "..")
                     .should().dependOnClassesThat().resideInAPackage("com.ledgerflow." + module + ".internal..")
                     .check(classes);

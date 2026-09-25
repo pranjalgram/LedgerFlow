@@ -93,6 +93,14 @@ public class PaymentService {
     @Transactional(propagation = Propagation.MANDATORY)
     public Payment lock(UUID merchant, UUID id) { return load(merchant, id, true); }
 
+    @Transactional(propagation = Propagation.MANDATORY)
+    public Payment applyRefund(UUID merchant, UUID actor, UUID id, long amount) {
+        var payment = load(merchant, id, true);
+        long refunded = payment.refundBudget().totalAfter(amount);
+        return transition(merchant, actor, payment, refunded == payment.amount() ? PaymentState.REFUNDED : PaymentState.PARTIALLY_REFUNDED,
+                payment.ledgerTransactionId(), null, refunded);
+    }
+
     private Payment load(UUID merchant, UUID id, boolean lock) {
         var rows = jdbc.query("select " + PaymentRows.COLUMNS + " from payment where merchant_id=? and id=?" + (lock ? " for update" : ""),
                 (rs, row) -> PaymentRows.map(rs, json), merchant, id);
