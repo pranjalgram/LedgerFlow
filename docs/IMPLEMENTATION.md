@@ -20,7 +20,7 @@ At each code phase: compile backend, run unit/architecture and relevant real-inf
 | 7 | Outbox/Kafka/consumer markers/DLT; publish-crash, duplicate and unresponsive-broker recovery tests | Complete |
 | 8 | Webhook encrypted secrets, approved/pinned destinations, signing, retries/replay; 500/timeout/duplicate tests | Complete |
 | 9 | Snapshot reconciliation persisted reports; injected corruption and repeated-run tests | Complete (UI in Phase 10) |
-| 10 | Complete dashboard with server-backed forms, errors/loading/pagination; RTL + Playwright critical flow | Pending |
+| 10 | Dashboard with server-backed forms, errors/loading/pagination; RTL + Playwright critical flow | Complete |
 | 11 | Metrics/logs/traces and actual provisioned observability verification | Pending |
 | 12 | Runtime images, Compose full workflow, K8s/Helm probes/resources/secret references | Pending |
 | 13 | Redis limits, fault/load scripts, SQL plans; actual measured results only | Pending |
@@ -74,3 +74,7 @@ Full backend build passed: 8 unit/architecture tests and 32 PostgreSQL/Kafka int
 ## Phase 9 verification
 
 Backend build passed with 8 unit/architecture and 36 integration tests. New tests verify repeatable clean reports, concurrent-write snapshots, privileged corruption detection without repair, tenant isolation, active-run exclusion and abandoned-worker fencing. Overview, audit and operational read routes are verified with tenant scoping. Frontend lint/typecheck/two tests passed. See RECONCILIATION.md for full-scan timeout and retention limits; the operations UI belongs to Phase 10.
+
+## Phase 10 verification
+
+Backend build remains green (8 unit/architecture, 36 integration tests). Frontend lint, typecheck, four RTL/unit tests and production build passed. Chromium E2E against the running PostgreSQL-backed demo API passed registration/login, funding, transfer, balanced journal, payment capture, partial/full refund, API-key secret display/revocation, reconciliation and mobile overflow checks. Screenshots in docs/screenshots are from those actual executions. Read DASHBOARD.md for memory-only sessions, unresolved-request navigation and bounded collection limitations.

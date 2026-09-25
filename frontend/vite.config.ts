@@ -10,5 +10,5 @@ export default defineConfig({
       '/actuator/health': 'http://localhost:8080',
     },
   },
-  test: { environment: 'jsdom', restoreMocks: true },
+  test: { environment: 'jsdom', restoreMocks: true, include: ['src/**/*.test.{ts,tsx}'] },
 });

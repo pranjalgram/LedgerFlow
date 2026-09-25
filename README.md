@@ -2,7 +2,7 @@
 
 A simulated payment, wallet, and double-entry ledger platform being developed as a modular Java application. No real money, bank integration, or payment credentials are involved.
 
-**Status: identity, immutable ledger, wallets, transfers, idempotent payments/refunds and merchant API keys are implemented and tested. Kafka outbox delivery, persistent consumer deduplication, notifications, dead-letter storage and signed webhook delivery and snapshot reconciliation are implemented.** The React shell displays live readiness. See [implementation status](docs/IMPLEMENTATION.md) for phase gates and evidence; design documents describe the target behavior.
+**Status: identity, immutable ledger, wallets, transfers, idempotent payments/refunds and merchant API keys are implemented and tested. Kafka outbox delivery, persistent consumer deduplication, notifications, dead-letter storage and signed webhook delivery and snapshot reconciliation are implemented.** The React dashboard supports the implemented financial and operations workflows. See [implementation status](docs/IMPLEMENTATION.md) for phase gates and evidence; design documents describe the target behavior.
 
 ## Engineering focus
 
@@ -125,3 +125,11 @@ If Windows Testcontainers fails while scanning PATH, remove malformed quoted PAT
 ## Current limitations
 
 Financial modules, event workers, credential rate limiting, dashboard forms, deployment images/manifests, seed data, screenshots and benchmark results remain unimplemented. Authentication has no MFA, email verification, password recovery or overlapping signing-key rotation. Interview explanations and resume bullets will be added only as their underlying functionality is verified. The shell intentionally contains no mock payment statistics or inactive feature controls. Do not interpret the architecture documents as implementation claims.
+
+## Verified dashboard
+
+![Merchant overview](docs/screenshots/overview.png)
+
+![Balanced ledger journal](docs/screenshots/ledger.png)
+
+See [dashboard workflows and tests](docs/DASHBOARD.md). Screenshots were captured from a real local end-to-end run with simulated funds.
