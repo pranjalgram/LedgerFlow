@@ -2,7 +2,7 @@
 
 A simulated payment, wallet, and double-entry ledger platform being developed as a modular Java application. No real money, bank integration, or payment credentials are involved.
 
-**Status: architecture and tested foundation complete. Financial features are not implemented yet.** The backend runs against PostgreSQL with Flyway, protected routes and health probes. The React shell displays live readiness. See [implementation status](docs/IMPLEMENTATION.md) for phase gates and evidence; design documents describe the target behavior.
+**Status: architecture, foundation, identity and merchant authorization are implemented and tested. Financial features are not implemented yet.** The backend has registration/login, JWT validation, refresh rotation/revocation, merchant memberships and role enforcement. The React shell displays live readiness. See [implementation status](docs/IMPLEMENTATION.md) for phase gates and evidence; design documents describe the target behavior.
 
 ## Engineering focus
 
@@ -42,6 +42,7 @@ Verified against official release documentation, Maven Central metadata/BOM, and
 | Micrometer / tracing bridge / OpenTelemetry | 1.17.1 / 1.7.1 / 1.62.0 (Boot BOM) |
 | Spring Modulith | 2.1.1, verification only initially |
 | ArchUnit / springdoc | 1.5.0 / 3.1.1 |
+| Bouncy Castle (Argon2 implementation) | 1.86 |
 | PostgreSQL server | 18.6 |
 | Kafka broker | 4.3.1, KRaft |
 | Redis | 8.10.2 (official GitHub latest release) |
@@ -81,6 +82,7 @@ Prerequisites: Java 25 with valid JAVA_HOME, Node 24.21.0, Docker Compose with L
 cp .env.example .env
 # Edit .env before starting. Do not commit it.
 docker compose up -d --wait postgres
+java scripts/GenerateDevKeys.java
 cd backend
 # Export DB_PASSWORD to match .env. Other DB settings have local defaults.
 ./gradlew bootRun
@@ -96,7 +98,9 @@ npm ci
 npm run dev
 ```
 
-Open http://localhost:5173. Vite proxies API and readiness calls to localhost:8080. No login or money APIs exist at this phase; all routes other than health are denied. Optional event infrastructure: `docker compose --profile events up -d --wait`. The Kafka/Redis configurations have been syntax-checked; event integration arrives in later phases.
+Open http://localhost:5173. Vite proxies API and readiness calls to localhost:8080. Authentication is available through the API; the dashboard login screens arrive in Phase 10. Optional event infrastructure: `docker compose --profile events up -d --wait`. The Kafka/Redis configurations have been syntax-checked; event integration arrives in later phases.
+
+Register with `POST /api/v1/auth/register` and JSON `{"email":"owner@example.test","password":"choose-a-long-local-password","merchantName":"Acme Commerce"}`. Login at `/api/v1/auth/login` with email/password. Use the returned accessToken as a Bearer token and registration's merchantId as `X-Merchant-Id` on `/api/v1/merchant`. Refresh/logout accept `{"refreshToken":"<returned-token>"}`. Secrets are never printed by the development key generator or stored in the repository. Keep this local until the planned rate limiting and deployment controls are installed.
 
 ## Verification
 
@@ -118,4 +122,4 @@ If Windows Testcontainers fails while scanning PATH, remove malformed quoted PAT
 
 ## Current limitations
 
-Financial modules, authentication, event workers, deployment images/manifests, seed data, screenshots and benchmark results remain unimplemented. Interview explanations and resume bullets will be added only as their underlying functionality is verified. The shell intentionally contains no mock payment statistics or inactive feature controls. Do not interpret the architecture documents as implementation claims.
+Financial modules, event workers, credential rate limiting, dashboard forms, deployment images/manifests, seed data, screenshots and benchmark results remain unimplemented. Authentication has no MFA, email verification, password recovery or overlapping signing-key rotation. Interview explanations and resume bullets will be added only as their underlying functionality is verified. The shell intentionally contains no mock payment statistics or inactive feature controls. Do not interpret the architecture documents as implementation claims.

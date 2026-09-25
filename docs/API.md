@@ -7,9 +7,9 @@ Bearer JWT for dashboard requests; merchant keys (`lf_test_<prefix>_<random-secr
 | Method/path | Purpose | Authorization |
 | --- | --- | --- |
 | POST /auth/register | Create user, merchant and OWNER membership | Public, IP limited |
-| POST /auth/login | Authenticate; issue short access token + refresh cookie | Public, IP/account limited |
-| POST /auth/refresh; POST /auth/logout | Rotate/revoke refresh family | Refresh cookie + CSRF protection |
-| GET /auth/me | User and available memberships | Dashboard JWT |
+| POST /auth/login | Authenticate; return short access token + explicit refresh token | Public; IP/account limiting planned |
+| POST /auth/refresh; POST /auth/logout | Rotate/revoke refresh family | Explicit refreshToken JSON body; no cookies |
+| GET /auth/me; GET /merchants | User / available memberships | Dashboard JWT |
 | GET/PATCH /merchant | Merchant details | Any member / OWNER or ADMIN |
 | GET/POST /merchant/members | List / add existing registered user | Member / OWNER or ADMIN |
 | PATCH/DELETE /merchant/members/{userId} | Role/revoke; protect last OWNER | OWNER; ADMIN cannot grant/remove OWNER |

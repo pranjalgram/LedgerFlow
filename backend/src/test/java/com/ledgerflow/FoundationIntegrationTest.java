@@ -13,25 +13,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.postgresql.PostgreSQLContainer;
 
 @Tag("integration")
-@Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class FoundationIntegrationTest {
-    @Container
-    static final PostgreSQLContainer DATABASE = new PostgreSQLContainer("postgres:18.6");
-
-    @DynamicPropertySource
-    static void databaseProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", DATABASE::getJdbcUrl);
-        registry.add("spring.datasource.username", DATABASE::getUsername);
-        registry.add("spring.datasource.password", DATABASE::getPassword);
-    }
+class FoundationIntegrationTest extends IntegrationSupport {
 
     @Value("${local.server.port}")
     private int port;
@@ -44,7 +29,7 @@ class FoundationIntegrationTest {
         assertThat(jdbc.queryForObject("select exponent from currency where code = 'INR'", Integer.class))
                 .isEqualTo(2);
         assertThat(jdbc.queryForObject("select count(*) from flyway_schema_history where success", Long.class))
-                .isEqualTo(1);
+                .isEqualTo(2);
         var response = get("/actuator/health/readiness");
         assertThat(response.statusCode()).isEqualTo(200);
         assertThat(response.body()).contains("\"status\":\"UP\"").doesNotContain("password", "jdbc:");

@@ -2,6 +2,7 @@
 .env.*
 !.env.example
 .tools/
+.local-secrets/
 .gradle/
 **/build/
 **/node_modules/

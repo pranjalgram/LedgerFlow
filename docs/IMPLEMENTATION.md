@@ -12,7 +12,7 @@ At each code phase: compile backend, run unit/architecture and relevant real-inf
 | --- | --- | --- |
 | 0 | Version matrix, modules, schema, financial invariants, failure/API contracts, ADRs, review | Complete (design only) |
 | 1 | Gradle wrapper/Boot health + Flyway baseline/PostgreSQL container, React shell, CI; clean builds and health integration test | Complete |
-| 2 | Identity/merchant/RBAC and keys foundations; login/refresh/revoke/tenant-isolation tests | Pending |
+| 2 | Identity/merchant/RBAC and signing-key foundations; login/refresh/revoke/tenant-isolation tests | Complete |
 | 3 | Restricted DB posting function, balanced immutable ledger/projection; malformed/append/mutate/rollback tests | Pending |
 | 4 | Wallet/funding/transfer/idempotency; 100-request spending and duplicate races | Pending |
 | 5 | Payment lifecycle/API-key access/ledger capture; invalid transition and replay tests | Pending |
@@ -27,6 +27,8 @@ At each code phase: compile backend, run unit/architecture and relevant real-inf
 | 14 | Full clean build/test/start/seed/E2E verification, docs audit, interview/resume | Pending |
 
 ## Test design
+
+Phase 2 evidence: backend build passed, including 2 unit/architecture tests and 7 real PostgreSQL integration tests. Tests cover Argon2 storage, tampered JWT rejection, tenant isolation, VIEWER denial, membership revocation, refresh reuse family revocation, logout, immutable audit and two concurrent owner removals (exactly one succeeds). Frontend lint/typecheck, 2 tests and production build passed; Compose config remains valid. Public module boundaries and cycles are checked. Credential rate limits, browser login UI, multi-key rotation, MFA/email verification/password recovery are explicitly not yet implemented. Refresh transport was simplified to explicit body tokens, with memory-only browser storage planned; SECURITY.md and ADR-009 reflect the decision.
 
 Phase 1 evidence (2026-09-25, Windows/Docker Desktop): Gradle 9.8.0 `build --write-locks` passed using Java 25.0.1; 1 architecture test and 2 PostgreSQL 18.6 integration tests passed. Flyway 12.4.0 migrated a fresh database; Boot 4.1.1/Hibernate 7.4.5 started and readiness was UP; private routes returned 401. Frontend lint/typecheck, 2 Vitest/RTL tests and Vite production build passed with verified Node 24.21.0. Compose config validated with events profile. CI authored, not executed remotely. No Kafka/Redis functional integration claimed yet.
 

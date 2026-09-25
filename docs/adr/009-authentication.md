@@ -17,3 +17,5 @@ Local Keycloak OIDC; session-only auth; custom JWT filter.
 ## Consequences and tradeoffs
 
 Fewer runtime dependencies but ownership of refresh/reuse/signing-key security. OIDC can replace login while subject mapping and tenant RBAC remain. MFA/email verification are later scope and must be disclosed.
+
+Phase 2 refinement: token transport is explicit JSON/Bearer, with frontend memory storage and re-login after reload. This avoids ambient authentication and cookie CSRF complexity. No cookie/session authentication is enabled. A future persistent browser session needs a separately reviewed cookie/CSRF design. One configured RSA pair is implemented first; overlapping key rotation remains a documented limitation.

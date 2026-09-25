@@ -41,3 +41,8 @@ logging:
   structured:
     format:
       console: ecs
+ledgerflow:
+  auth:
+    issuer: ${JWT_ISSUER:urn:ledgerflow:local}
+    private-key: ${JWT_PRIVATE_KEY:file:../.local-secrets/jwt-private.pem}
+    public-key: ${JWT_PUBLIC_KEY:file:../.local-secrets/jwt-public.pem}
