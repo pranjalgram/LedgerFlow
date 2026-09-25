@@ -25,32 +25,32 @@ class WalletController {
     record Transfer(@NotNull UUID sourceWalletId, @NotNull UUID destinationWalletId, long amount, @NotNull Money.Currency currency) { }
 
     @PostMapping("/wallets")
-    ResponseEntity<WalletService.Wallet> create(@RequestHeader("X-Merchant-Id") UUID merchant, @Valid @RequestBody Create request) {
+    ResponseEntity<WalletService.Wallet> create(@com.ledgerflow.merchant.MerchantId UUID merchant, @Valid @RequestBody Create request) {
         var wallet = wallets.create(merchant, request.label(), request.kind(), request.currency(), request.customerId());
         return ResponseEntity.created(URI.create("/api/v1/wallets/" + wallet.id() + "/balance")).body(wallet);
     }
 
     @GetMapping("/wallets")
-    Cursor.Page<WalletQueries.WalletRow> list(@RequestHeader("X-Merchant-Id") UUID merchant,
+    Cursor.Page<WalletQueries.WalletRow> list(@com.ledgerflow.merchant.MerchantId UUID merchant,
             @RequestParam(defaultValue = "25") int limit, @RequestParam(required = false) String cursor) { return queries.list(merchant, limit, cursor); }
 
     @GetMapping("/wallets/{id}/balance")
-    WalletQueries.Balance balance(@RequestHeader("X-Merchant-Id") UUID merchant, @PathVariable UUID id) { return queries.balance(merchant, id); }
+    WalletQueries.Balance balance(@com.ledgerflow.merchant.MerchantId UUID merchant, @PathVariable UUID id) { return queries.balance(merchant, id); }
 
     @GetMapping("/wallets/{id}/transactions")
-    Cursor.Page<WalletQueries.History> history(@RequestHeader("X-Merchant-Id") UUID merchant, @PathVariable UUID id,
+    Cursor.Page<WalletQueries.History> history(@com.ledgerflow.merchant.MerchantId UUID merchant, @PathVariable UUID id,
             @RequestParam(defaultValue = "25") int limit, @RequestParam(required = false) String cursor) { return queries.history(merchant, id, limit, cursor); }
 
     @PostMapping("/transfers")
-    ResponseEntity<tools.jackson.databind.JsonNode> transfer(@RequestHeader("X-Merchant-Id") UUID merchant,
+    ResponseEntity<tools.jackson.databind.JsonNode> transfer(@com.ledgerflow.merchant.MerchantId UUID merchant,
             @RequestHeader(value = "Idempotency-Key", required = false) String key, @Valid @RequestBody Transfer request) {
         return wallets.transfer(merchant, new WalletService.TransferRequest(request.sourceWalletId(), request.destinationWalletId(), request.amount(), request.currency()), key).http();
     }
 
     @GetMapping("/transfers")
-    Cursor.Page<WalletQueries.Transfer> transfers(@RequestHeader("X-Merchant-Id") UUID merchant,
+    Cursor.Page<WalletQueries.Transfer> transfers(@com.ledgerflow.merchant.MerchantId UUID merchant,
             @RequestParam(defaultValue = "25") int limit, @RequestParam(required = false) String cursor) { return queries.transfers(merchant, limit, cursor); }
 
     @GetMapping("/transfers/{id}")
-    WalletQueries.Transfer transfer(@RequestHeader("X-Merchant-Id") UUID merchant, @PathVariable UUID id) { return queries.transfer(merchant, id); }
+    WalletQueries.Transfer transfer(@com.ledgerflow.merchant.MerchantId UUID merchant, @PathVariable UUID id) { return queries.transfer(merchant, id); }
 }

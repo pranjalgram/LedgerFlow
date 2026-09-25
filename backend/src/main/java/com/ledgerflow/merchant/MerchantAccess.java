@@ -2,6 +2,8 @@ package com.ledgerflow.merchant;
 
 import com.ledgerflow.identity.IdentityService;
 import com.ledgerflow.shared.DomainException;
+import com.ledgerflow.shared.ApiPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,11 @@ public class MerchantAccess {
 
     @Transactional(readOnly = true)
     public Tenant require(UUID merchantId) {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof ApiPrincipal key) {
+            if (!key.merchantId().equals(merchantId)) throw new DomainException(404, "merchant-not-found", "The merchant was not found.");
+            return new Tenant(merchantId, key.keyId(), key.canWrite() ? Role.DEVELOPER : Role.VIEWER);
+        }
         var user = identity.currentUser();
         var roles = jdbc.query("""
                 select mm.role from merchant_membership mm join merchant m on m.id=mm.merchant_id

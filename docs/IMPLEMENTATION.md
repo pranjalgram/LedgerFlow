@@ -15,7 +15,7 @@ At each code phase: compile backend, run unit/architecture and relevant real-inf
 | 2 | Identity/merchant/RBAC and signing-key foundations; login/refresh/revoke/tenant-isolation tests | Complete |
 | 3 | Restricted DB posting function, balanced immutable ledger/projection; malformed/append/mutate/rollback tests | Complete |
 | 4 | Wallet/funding/transfer/idempotency; 100-request spending and duplicate races | Complete |
-| 5 | Payment lifecycle/API-key access/ledger capture; invalid transition and replay tests | Pending |
+| 5 | Payment lifecycle/API-key access/ledger capture; invalid transition and replay tests | Complete |
 | 6 | Partial/full refunds; concurrent sum limit and insufficient-settlement tests | Pending |
 | 7 | Outbox/Kafka/consumer markers/DLT; publish-crash, duplicate and broker-down tests | Pending |
 | 8 | Webhook encrypted secrets, SSRF-safe delivery, signing, retries/replay; 500/timeout/duplicate tests | Pending |
@@ -27,6 +27,8 @@ At each code phase: compile backend, run unit/architecture and relevant real-inf
 | 14 | Full clean build/test/start/seed/E2E verification, docs audit, interview/resume | Pending |
 
 ## Test design
+
+Phase 5 evidence: backend build passed (6 unit/architecture tests, 19 PostgreSQL integration tests). A merchant API key creates/confirms/replays a payment without a tenant header; successful capture posts once, changes exact balances and records its lifecycle. Tests cover two concurrent confirmations (one success, one conflict), failed/cancelled payments with no posting, key hashing, once-only secret exposure, read-only scope, key revocation, denied key access to dashboard administration, and cross-tenant reads. Frontend checks still pass. API keys use Spring Security's bearer authentication manager dispatch, not a handwritten servlet authentication filter. Refund workflows and event delivery remain pending.
 
 Phase 4 evidence: backend build passed (5 unit/architecture tests, 16 PostgreSQL integration tests). With 1,000,000 minor units and 100 concurrent transfers of 100,000, exactly 10 were accepted and 90 rejected; source ended at zero, destination at 1,000,000 and all journals balanced. Twenty concurrent identical requests returned one stored response and created one transfer. Tests verify fingerprint mismatch, expired-key tombstones, fractional amount rejection and cross-tenant wallet isolation. Audit, ledger, projection, outbox intent and idempotency response commit together. Frontend lint/typecheck/2 tests pass; Compose config passes. Kafka publication is not implemented yet; committed event intent is durable in outbox_event.
 

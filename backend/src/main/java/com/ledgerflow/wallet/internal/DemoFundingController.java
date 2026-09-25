@@ -18,7 +18,7 @@ class DemoFundingController {
     record Fund(long amount, @NotNull Money.Currency currency) { }
 
     @PostMapping("/api/v1/wallets/{id}/funding")
-    ResponseEntity<JsonNode> fund(@RequestHeader("X-Merchant-Id") UUID merchant, @PathVariable UUID id,
+    ResponseEntity<JsonNode> fund(@com.ledgerflow.merchant.MerchantId UUID merchant, @PathVariable UUID id,
             @RequestHeader(value = "Idempotency-Key", required = false) String key, @Valid @RequestBody Fund request) {
         return wallets.fund(merchant, id, new Money(request.amount(), request.currency()), key).http();
     }

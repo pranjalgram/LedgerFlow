@@ -104,6 +104,14 @@ public class WalletService {
         return require(merchant, ids.getFirst());
     }
 
+    @Transactional(propagation = Propagation.MANDATORY)
+    public Wallet customer(UUID merchant, Money.Currency currency, String customerId) {
+        var ids = jdbc.query("select id from wallet where merchant_id=? and currency=? and customer_id=? and kind='CUSTOMER'",
+                (rs, row) -> rs.getObject(1, UUID.class), merchant, currency.name(), customerId);
+        if (ids.isEmpty()) throw new DomainException(404, "customer-not-found", "The customer wallet was not found.");
+        return require(merchant, ids.getFirst());
+    }
+
     public static Posting posting(UUID merchant, String kind, UUID id, UUID debit, UUID credit, Money money) {
         return new Posting(merchant, kind, id, money.currency(), List.of(new Posting.Entry(debit, Posting.Side.DEBIT, money.amountMinor()),
                 new Posting.Entry(credit, Posting.Side.CREDIT, money.amountMinor())), null);

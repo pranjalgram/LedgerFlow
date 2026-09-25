@@ -20,20 +20,20 @@ class LedgerController {
     LedgerController(MerchantAccess access, LedgerQueries ledger) { this.access = access; this.ledger = ledger; }
 
     @GetMapping("/accounts")
-    List<LedgerQueries.Account> accounts(@RequestHeader("X-Merchant-Id") UUID merchantId) {
+    List<LedgerQueries.Account> accounts(@com.ledgerflow.merchant.MerchantId UUID merchantId) {
         access.require(merchantId);
         return ledger.accounts(merchantId);
     }
 
     @GetMapping("/transactions")
-    Cursor.Page<LedgerQueries.Journal> transactions(@RequestHeader("X-Merchant-Id") UUID merchantId,
+    Cursor.Page<LedgerQueries.Journal> transactions(@com.ledgerflow.merchant.MerchantId UUID merchantId,
             @RequestParam(defaultValue = "25") int limit, @RequestParam(required = false) String cursor) {
         access.require(merchantId);
         return ledger.transactions(merchantId, limit, cursor);
     }
 
     @GetMapping("/transactions/{id}")
-    LedgerQueries.Detail detail(@RequestHeader("X-Merchant-Id") UUID merchantId, @PathVariable UUID id) {
+    LedgerQueries.Detail detail(@com.ledgerflow.merchant.MerchantId UUID merchantId, @PathVariable UUID id) {
         access.require(merchantId);
         return ledger.detail(merchantId, id);
     }
