@@ -48,7 +48,18 @@ class KafkaConfiguration {
         var backoff = new ExponentialBackOffWithMaxRetries(3);
         backoff.setInitialInterval(250); backoff.setMultiplier(2); backoff.setMaxInterval(2000);
         var handler = new DefaultErrorHandler(recoverer, backoff);
+        handler.setLogLevel(org.springframework.kafka.KafkaException.Level.DEBUG);
         handler.addNotRetryableExceptions(EventCodec.InvalidEvent.class);
         return handler;
+    }
+    @Bean
+    org.springframework.kafka.support.ProducerListener<Object, Object> sanitizedProducerListener() {
+        return new org.springframework.kafka.support.ProducerListener<>() {
+            @Override
+            public void onError(org.apache.kafka.clients.producer.ProducerRecord<Object, Object> record,
+                    org.apache.kafka.clients.producer.RecordMetadata metadata, Exception exception) {
+                org.slf4j.LoggerFactory.getLogger(KafkaConfiguration.class).warn("Kafka publication failed; durable retry remains pending");
+            }
+        };
     }
 }

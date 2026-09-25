@@ -43,6 +43,9 @@ spring:
       max-poll-records: 20
     listener:
       ack-mode: record
+      observation-enabled: true
+    template:
+      observation-enabled: true
 server:
   port: ${PORT:8080}
   error:
@@ -51,10 +54,27 @@ server:
     include-binding-errors: never
   shutdown: graceful
 management:
+  otlp:
+    metrics:
+      export:
+        enabled: false
   endpoints:
     web:
       exposure:
-        include: health
+        include: health,prometheus
+  tracing:
+    sampling:
+      probability: ${TRACING_SAMPLE_RATE:0.1}
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          endpoint: ${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:http://localhost:4318/v1/traces}
+          enabled: ${TRACING_EXPORT_ENABLED:false}
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
   endpoint:
     health:
       show-details: never
@@ -68,6 +88,8 @@ logging:
     format:
       console: ecs
 ledgerflow:
+  metrics:
+    password: ${METRICS_PASSWORD:}
   webhooks:
     encryption-key: ${WEBHOOK_ENCRYPTION_KEY:}
     allowed-origins: ${WEBHOOK_ALLOWED_ORIGINS:}

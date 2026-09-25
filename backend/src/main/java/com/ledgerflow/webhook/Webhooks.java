@@ -66,10 +66,10 @@ public class Webhooks {
     public void consume(Outbox.Event event) {
         if (!processed.first(CONSUMER, event.id())) return;
         jdbc.update("""
-                insert into webhook_delivery(id,merchant_id,endpoint_id,event_id,payload)
-                select gen_random_uuid(),merchant_id,id,?,? from webhook_endpoint
+                insert into webhook_delivery(id,merchant_id,endpoint_id,event_id,payload,trace_context)
+                select gen_random_uuid(),merchant_id,id,?,?,? from webhook_endpoint
                 where merchant_id=? and enabled and ?=any(subscriptions) on conflict do nothing
-                """, event.id(), json.writeValueAsString(event), event.merchantId(), event.type());
+                """, event.id(), json.writeValueAsString(event), com.ledgerflow.shared.Telemetry.currentTraceParent(), event.merchantId(), event.type());
     }
     public record Delivery(UUID id, UUID endpointId, UUID eventId, String state, int attempts, Instant createdAt,
                            Instant nextAttemptAt, Integer httpStatus, String error) { }

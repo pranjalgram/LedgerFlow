@@ -98,13 +98,13 @@ npm ci
 npm run dev
 ```
 
-Open http://localhost:5173. Vite proxies API and readiness calls to localhost:8080. Authentication is available through the API; the dashboard login screens arrive in Phase 10. Optional event infrastructure: `docker compose --profile events up -d --wait`. The Kafka/Redis configurations have been syntax-checked; event integration arrives in later phases.
+Open http://localhost:5173. Vite proxies API and readiness calls to localhost:8080. The dashboard includes registration, login and tenant-scoped financial and developer workflows. Optional event infrastructure: `docker compose --profile events up -d --wait`. Kafka outbox publishing and idempotent notification/webhook consumers are implemented and integration-tested. Redis application integration remains pending.
 
 Register with `POST /api/v1/auth/register` and JSON `{"email":"owner@example.test","password":"choose-a-long-local-password","merchantName":"Acme Commerce"}`. Login at `/api/v1/auth/login` with email/password. Use the returned accessToken as a Bearer token and registration's merchantId as `X-Merchant-Id` on `/api/v1/merchant`. Refresh/logout accept `{"refreshToken":"<returned-token>"}`. Secrets are never printed by the development key generator or stored in the repository. Keep this local until the planned rate limiting and deployment controls are installed.
 
 ## Verification
 
-To enable simulated funding, set `SPRING_PROFILES_ACTIVE=demo` when starting the backend. Create wallets through `POST /api/v1/wallets` with label, kind (`CUSTOMER` or `SETTLEMENT`) and currency (`INR`). Fund via `POST /api/v1/wallets/{id}/funding`, then transfer through `/api/v1/transfers`. Both money endpoints require Idempotency-Key and integer minor-unit amount/currency. `1000` means INR 10.00. Read balances at `/wallets/{id}/balance`, history at `/wallets/{id}/transactions`, and journal entries at `/ledger/transactions/{id}`. No Kafka publishing is claimed yet; event intent is stored transactionally.
+To enable simulated funding, set `SPRING_PROFILES_ACTIVE=demo` when starting the backend. Create wallets through `POST /api/v1/wallets` with label, kind (`CUSTOMER` or `SETTLEMENT`) and currency (`INR`). Fund via `POST /api/v1/wallets/{id}/funding`, then transfer through `/api/v1/transfers`. Both money endpoints require Idempotency-Key and integer minor-unit amount/currency. `1000` means INR 10.00. Read balances at `/wallets/{id}/balance`, history at `/wallets/{id}/transactions`, and journal entries at `/ledger/transactions/{id}`. Event intent is stored transactionally and published asynchronously when EVENTS_ENABLED=true.
 
 ```bash
 cd backend
@@ -124,7 +124,7 @@ If Windows Testcontainers fails while scanning PATH, remove malformed quoted PAT
 
 ## Current limitations
 
-Financial modules, event workers, credential rate limiting, dashboard forms, deployment images/manifests, seed data, screenshots and benchmark results remain unimplemented. Authentication has no MFA, email verification, password recovery or overlapping signing-key rotation. Interview explanations and resume bullets will be added only as their underlying functionality is verified. The shell intentionally contains no mock payment statistics or inactive feature controls. Do not interpret the architecture documents as implementation claims.
+Credential rate limiting, deployment images/manifests, a packaged seed journey and performance benchmarks remain pending. Financial modules, event workers, reconciliation and dashboard forms are implemented and tested. Authentication has no MFA, email verification, password recovery or overlapping signing-key rotation. Interview explanations and resume bullets will be added only as their underlying functionality is verified. Dashboard statistics are read from the backend. Do not interpret the architecture documents as implementation claims.
 
 ## Verified dashboard
 

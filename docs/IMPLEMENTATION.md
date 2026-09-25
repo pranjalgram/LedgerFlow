@@ -78,3 +78,7 @@ Backend build passed with 8 unit/architecture and 36 integration tests. New test
 ## Phase 10 verification
 
 Backend build remains green (8 unit/architecture, 36 integration tests). Frontend lint, typecheck, four RTL/unit tests and production build passed. Chromium E2E against the running PostgreSQL-backed demo API passed registration/login, funding, transfer, balanced journal, payment capture, partial/full refund, API-key secret display/revocation, reconciliation and mobile overflow checks. Screenshots in docs/screenshots are from those actual executions. Read DASHBOARD.md for memory-only sessions, unresolved-request navigation and bounded collection limitations.
+
+## Phase 11 verification
+
+Backend build passed with 9 unit/architecture tests and 40 PostgreSQL/Kafka integration tests. New coverage verifies metrics authentication, HTTP trace persistence, context restoration, commit-only counters and real Kafka trace continuity into webhook jobs. Frontend lint/typecheck/four tests/build passed. Compose configuration, Prometheus rules, Grafana health and Tempo readiness passed. Live host scrape/export inspection remains pending after automatic tool review blocked the backend restart with local secrets. See OBSERVABILITY.md for exact instrumentation and deployment limits.

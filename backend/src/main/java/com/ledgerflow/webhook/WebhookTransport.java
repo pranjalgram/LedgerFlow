@@ -88,7 +88,9 @@ public class WebhookTransport implements AutoCloseable {
         long timestamp = Instant.now().getEpochSecond();
         String path = uri.getRawPath().isEmpty() ? "/" : uri.getRawPath();
         if (uri.getRawQuery() != null) path += "?" + uri.getRawQuery();
+        String parent = com.ledgerflow.shared.Telemetry.currentTraceParent();
         String headers = "POST " + path + " HTTP/1.1\r\nHost: " + uri.getRawAuthority()
+                + (parent == null ? "" : "\r\ntraceparent: " + parent)
                 + "\r\nContent-Type: application/json\r\nConnection: close\r\nContent-Length: " + body.length
                 + "\r\nUser-Agent: LedgerFlow-Webhook/1\r\nX-LedgerFlow-Event-Id: " + event
                 + "\r\nX-LedgerFlow-Timestamp: " + timestamp + "\r\nX-LedgerFlow-Signature: v1="

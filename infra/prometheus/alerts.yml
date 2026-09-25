@@ -1,0 +1,22 @@
+groups:
+  - name: ledgerflow
+    rules:
+      - alert: LedgerFlowUnavailable
+        expr: up{job="ledgerflow"} == 0
+        for: 2m
+        labels: {severity: critical}
+        annotations: {summary: 'LedgerFlow metrics endpoint has been unreachable for two minutes'}
+      - alert: OutboxBlocked
+        expr: ledgerflow_outbox_blocked > 0
+        for: 1m
+        labels: {severity: warning}
+        annotations: {summary: 'Committed events require operator intervention'}
+      - alert: ReconciliationDiscrepancy
+        expr: delta(ledgerflow_reconciliation_problem_runs[5m]) > 0
+        labels: {severity: critical}
+        annotations: {summary: 'Inspect newly failed or discrepant reconciliation reports'}
+      - alert: BacklogSnapshotStale
+        expr: time() - ledgerflow_backlog_refreshed_epoch_seconds > 60
+        for: 1m
+        labels: {severity: warning}
+        annotations: {summary: 'Database-backed backlog measurements are stale'}

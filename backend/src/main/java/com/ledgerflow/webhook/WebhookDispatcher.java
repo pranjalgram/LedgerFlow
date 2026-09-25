@@ -11,12 +11,17 @@ public class WebhookDispatcher {
     private final WebhookQueue queue;
     private final WebhookTransport transport;
     private final WebhookSecrets secrets;
-    public WebhookDispatcher(WebhookQueue queue, WebhookTransport transport, WebhookSecrets secrets) {
-        this.queue = queue; this.transport = transport; this.secrets = secrets;
+    private final com.ledgerflow.shared.Telemetry telemetry;
+    public WebhookDispatcher(WebhookQueue queue, WebhookTransport transport, WebhookSecrets secrets, com.ledgerflow.shared.Telemetry telemetry) {
+        this.queue = queue; this.transport = transport; this.secrets = secrets; this.telemetry = telemetry;
     }
     @Scheduled(fixedDelayString = "${ledgerflow.webhooks.poll-delay:1000}", initialDelayString = "${ledgerflow.webhooks.initial-delay:5000}")
     public void dispatchOnce() {
         for (var job : queue.claim()) {
+            telemetry.observe("ledgerflow.webhook.delivery", job.traceContext(), () -> { deliver(job); return null; });
+        }
+    }
+    private void deliver(WebhookQueue.Job job) {
             WebhookTransport.Result result;
             try {
                 result = job.enabled() ? transport.post(job.url(), job.eventId(), job.payload(), secrets.decrypt(job.endpointId(), job.encryptedSecret()))
@@ -24,7 +29,6 @@ public class WebhookDispatcher {
             } catch (DomainException | IllegalStateException unavailable) {
                 result = new WebhookTransport.Result(null, "secret-unavailable", 0);
             }
-            queue.finish(job, result);
-        }
+            if (queue.finish(job, result)) telemetry.webhookResult(result.succeeded() ? "success" : "failure", result.durationMs());
     }
 }

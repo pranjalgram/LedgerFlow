@@ -16,8 +16,9 @@ public class LedgerService {
     private final JdbcTemplate jdbc;
     private final ObjectMapper json;
     private final Outbox outbox;
+    private final com.ledgerflow.shared.Telemetry telemetry;
 
-    public LedgerService(JdbcTemplate jdbc, ObjectMapper json, Outbox outbox) { this.jdbc = jdbc; this.json = json; this.outbox = outbox; }
+    public LedgerService(JdbcTemplate jdbc, ObjectMapper json, Outbox outbox, com.ledgerflow.shared.Telemetry telemetry) { this.jdbc = jdbc; this.json = json; this.outbox = outbox; this.telemetry = telemetry; }
 
     @Transactional(propagation = Propagation.MANDATORY)
     public Optional<UUID> cashControl(UUID merchantId, Money.Currency currency) {
@@ -35,6 +36,9 @@ public class LedgerService {
     /** Empty is a normal insufficient-funds outcome; no journal or projection change has occurred. */
     @Transactional(propagation = Propagation.MANDATORY)
     public Optional<UUID> post(Posting posting) {
+        return telemetry.observe("ledgerflow.ledger.post", null, () -> postJournal(posting));
+    }
+    private Optional<UUID> postJournal(Posting posting) {
         UUID id = UUID.randomUUID();
         String entries = json.writeValueAsString(posting.entries().stream().map(entry -> Map.of(
                 "account_id", entry.accountId(), "side", entry.side().name(), "amount", entry.amountMinor())).toList());

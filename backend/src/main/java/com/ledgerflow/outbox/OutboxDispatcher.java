@@ -16,13 +16,19 @@ public class OutboxDispatcher {
     private final KafkaTemplate<String, String> kafka;
     private final EventCodec codec;
     private final String topic;
+    private final com.ledgerflow.shared.Telemetry telemetry;
 
     public OutboxDispatcher(OutboxQueue queue, KafkaTemplate<String, String> kafka, EventCodec codec,
-            @Value("${ledgerflow.events.topic}") String topic) { this.queue = queue; this.kafka = kafka; this.codec = codec; this.topic = topic; }
+            @Value("${ledgerflow.events.topic}") String topic, com.ledgerflow.shared.Telemetry telemetry) { this.queue = queue; this.kafka = kafka; this.codec = codec; this.topic = topic; this.telemetry = telemetry; }
 
     @Scheduled(fixedDelayString = "${ledgerflow.events.poll-delay:1000}", initialDelayString = "${ledgerflow.events.initial-delay:5000}")
     public void dispatchOnce() {
         for (var event : queue.claim()) {
+            telemetry.observe("ledgerflow.outbox.publish", event.traceContext(), () -> { publish(event); return null; });
+            if (Thread.currentThread().isInterrupted()) return;
+        }
+    }
+    private void publish(OutboxQueue.Claimed event) {
             try {
                 codec.decode(event.payload());
                 kafka.send(topic, event.messageKey(), event.payload()).get(5, TimeUnit.SECONDS);
@@ -36,6 +42,5 @@ public class OutboxDispatcher {
                 queue.retry(event, "publisher-interrupted");
                 return;
             }
-        }
     }
 }

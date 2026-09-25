@@ -23,7 +23,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.kafka.KafkaContainer;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
-    "ledgerflow.events.enabled=true", "ledgerflow.events.initial-delay=3600000", "ledgerflow.events.poll-delay=3600000",
+    "management.tracing.sampling.probability=1", "ledgerflow.events.enabled=true", "ledgerflow.events.initial-delay=3600000", "ledgerflow.events.poll-delay=3600000",
     "ledgerflow.webhooks.initial-delay=3600000", "ledgerflow.webhooks.allowed-origins=https://hooks.example.test:443"
 })
 class MessagingIntegrationTest extends IntegrationSupport {
@@ -44,6 +44,36 @@ class MessagingIntegrationTest extends IntegrationSupport {
     @Autowired NotificationService notifications;
     @Autowired EventCodec codec;
     @Autowired OutboxDispatcher dispatcher;
+    @Autowired io.micrometer.core.instrument.MeterRegistry meters;
+    @Autowired com.ledgerflow.shared.Telemetry telemetry;
+
+    @Test
+    void persistedTraceSurvivesOutboxAndKafkaIntoWebhookJob() throws Exception {
+        var owner = register();
+        assertThat(request("POST", "/api/v1/webhooks", Map.of("url", "https://hooks.example.test/trace", "subscriptions", java.util.List.of("payment.succeeded")), owner.token(), owner.merchantId()).statusCode()).isEqualTo(201);
+        UUID id = telemetry.observe("test.request", null, () -> transactions.execute(status -> outbox.append(owner.merchantId(), "payment.succeeded", "payment", UUID.randomUUID(), 1, Map.of())));
+        String parent = jdbc.queryForObject("select trace_context from outbox_event where id=?", String.class, id);
+        for (int attempt = 0; attempt < 100 && count(id) == 0; attempt++) dispatcher.dispatchOnce();
+        await(() -> jdbc.queryForObject("select count(*) from webhook_delivery where event_id=?", Integer.class, id) == 1);
+        String delivery = jdbc.queryForObject("select trace_context from webhook_delivery where event_id=?", String.class, id);
+        assertThat(parent).isNotNull();
+        assertThat(delivery).isNotNull();
+        assertThat(delivery.substring(3, 35)).isEqualTo(parent.substring(3, 35));
+        assertThat(delivery.substring(36, 52)).isNotEqualTo(parent.substring(36, 52));
+    }
+
+    @Test
+    void eventCounterCountsCommittedTransactionsOnly() throws Exception {
+        var merchant = register().merchantId();
+        var counter = meters.counter("ledgerflow.events.committed", "type", "payment.created");
+        double baseline = counter.count();
+        transactions.executeWithoutResult(status -> {
+            outbox.append(merchant, "payment.created", "payment", UUID.randomUUID(), 1, Map.of()); status.setRollbackOnly();
+        });
+        assertThat(counter.count()).isEqualTo(baseline);
+        transactions.executeWithoutResult(status -> outbox.append(merchant, "payment.created", "payment", UUID.randomUUID(), 1, Map.of()));
+        assertThat(counter.count()).isEqualTo(baseline + 1);
+    }
 
     @Test
     void kafkaEventCreatesOneWebhookJobPerSubscribedEndpoint() throws Exception {

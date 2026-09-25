@@ -12,7 +12,7 @@ public class WebhookQueue {
     private final JdbcTemplate jdbc;
     public WebhookQueue(JdbcTemplate jdbc) { this.jdbc = jdbc; }
     public record Job(UUID id, UUID endpointId, UUID eventId, String payload, String url, String encryptedSecret,
-                      UUID lease, int attempt, int cycleAttempt, boolean enabled) { }
+                      UUID lease, int attempt, int cycleAttempt, boolean enabled, String traceContext) { }
     @Transactional
     public List<Job> claim() {
         return jdbc.query("""
@@ -24,10 +24,10 @@ public class WebhookQueue {
                   update webhook_delivery d set state='IN_FLIGHT',attempts=attempts+1,cycle_attempts=cycle_attempts+1,
                     lease_token=gen_random_uuid(),lease_until=now()+interval '60 seconds'
                   from eligible where d.id=eligible.id returning d.*
-                ) select d.id,d.endpoint_id,d.event_id,d.payload,e.url,e.encrypted_secret,d.lease_token,d.attempts,d.cycle_attempts,e.enabled
+                ) select d.id,d.endpoint_id,d.event_id,d.payload,e.url,e.encrypted_secret,d.lease_token,d.attempts,d.cycle_attempts,e.enabled,d.trace_context
                 from claimed d join webhook_endpoint e on e.id=d.endpoint_id
                 """, (rs, row) -> new Job(rs.getObject(1, UUID.class), rs.getObject(2, UUID.class), rs.getObject(3, UUID.class),
-                        rs.getString(4), rs.getString(5), rs.getString(6), rs.getObject(7, UUID.class), rs.getInt(8), rs.getInt(9), rs.getBoolean(10)));
+                        rs.getString(4), rs.getString(5), rs.getString(6), rs.getObject(7, UUID.class), rs.getInt(8), rs.getInt(9), rs.getBoolean(10), rs.getString(11)));
     }
     @Transactional
     public boolean finish(Job job, WebhookTransport.Result result) {

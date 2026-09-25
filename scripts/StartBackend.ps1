@@ -5,7 +5,7 @@ if ($JavaHome) { $env:JAVA_HOME = $JavaHome }
 if (-not (Test-Path (Join-Path $env:JAVA_HOME 'bin/java.exe'))) {
     throw 'Set JAVA_HOME to Java 25 or pass -JavaHome with the JDK directory.'
 }
-$allowed = @('DB_URL','DB_USERNAME','DB_PASSWORD','DB_MIGRATION_USERNAME','DB_MIGRATION_PASSWORD','PORT','JWT_PRIVATE_KEY','JWT_PUBLIC_KEY','JWT_ISSUER','SPRING_PROFILES_ACTIVE','EVENTS_ENABLED','KAFKA_BOOTSTRAP_SERVERS','WEBHOOK_ENCRYPTION_KEY','WEBHOOK_ALLOWED_ORIGINS','WEBHOOK_ALLOW_LOCAL')
+$allowed = @('DB_URL','DB_USERNAME','DB_PASSWORD','DB_MIGRATION_USERNAME','DB_MIGRATION_PASSWORD','PORT','JWT_PRIVATE_KEY','JWT_PUBLIC_KEY','JWT_ISSUER','SPRING_PROFILES_ACTIVE','EVENTS_ENABLED','KAFKA_BOOTSTRAP_SERVERS','WEBHOOK_ENCRYPTION_KEY','WEBHOOK_ALLOWED_ORIGINS','WEBHOOK_ALLOW_LOCAL','METRICS_PASSWORD','TRACING_EXPORT_ENABLED','TRACING_SAMPLE_RATE','OTEL_EXPORTER_OTLP_TRACES_ENDPOINT')
 $envPath = Join-Path $projectRoot '.env'
 if (Test-Path $envPath) {
     foreach ($line in Get-Content $envPath) {
@@ -16,6 +16,9 @@ if (Test-Path $envPath) {
 }
 if (-not $env:WEBHOOK_ENCRYPTION_KEY -and (Test-Path (Join-Path $projectRoot '.local-secrets/webhook-key'))) {
     $env:WEBHOOK_ENCRYPTION_KEY = (Get-Content (Join-Path $projectRoot '.local-secrets/webhook-key') -Raw).Trim()
+}
+if (-not $env:METRICS_PASSWORD -and (Test-Path (Join-Path $projectRoot '.local-secrets/metrics-password'))) {
+    $env:METRICS_PASSWORD = (Get-Content (Join-Path $projectRoot '.local-secrets/metrics-password') -Raw).Trim()
 }
 Push-Location (Join-Path $projectRoot 'backend')
 try { & .\gradlew.bat bootRun; exit $LASTEXITCODE } finally { Pop-Location }

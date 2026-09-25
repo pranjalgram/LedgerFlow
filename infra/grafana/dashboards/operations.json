@@ -1,0 +1,261 @@
+{
+  "title": "LedgerFlow Operations",
+  "uid": "ledgerflow-operations",
+  "version": 1,
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "schemaVersion": 39,
+  "refresh": "15s",
+  "panels": [
+    {
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(http_server_requests_seconds_count[5m]))"
+        }
+      ],
+      "type": "timeseries",
+      "options": {
+        "legend": {
+          "placement": "bottom",
+          "displayMode": "list"
+        }
+      },
+      "title": "HTTP requests / second",
+      "fieldConfig": {
+        "overrides": [],
+        "defaults": {}
+      },
+      "gridPos": {
+        "y": 0.0,
+        "h": 8,
+        "w": 12,
+        "x": 0
+      },
+      "id": 1,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      }
+    },
+    {
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket[5m])))"
+        }
+      ],
+      "type": "timeseries",
+      "options": {
+        "legend": {
+          "placement": "bottom",
+          "displayMode": "list"
+        }
+      },
+      "title": "HTTP p95 seconds",
+      "fieldConfig": {
+        "overrides": [],
+        "defaults": {}
+      },
+      "gridPos": {
+        "y": 0.0,
+        "h": 8,
+        "w": 12,
+        "x": 12
+      },
+      "id": 2,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      }
+    },
+    {
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (type) (rate(ledgerflow_events_committed_total[5m]))"
+        }
+      ],
+      "type": "timeseries",
+      "options": {
+        "legend": {
+          "placement": "bottom",
+          "displayMode": "list"
+        }
+      },
+      "title": "Committed financial events",
+      "fieldConfig": {
+        "overrides": [],
+        "defaults": {}
+      },
+      "gridPos": {
+        "y": 8.0,
+        "h": 8,
+        "w": 12,
+        "x": 0
+      },
+      "id": 3,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      }
+    },
+    {
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "ledgerflow_outbox_pending or ledgerflow_outbox_blocked"
+        }
+      ],
+      "type": "timeseries",
+      "options": {
+        "legend": {
+          "placement": "bottom",
+          "displayMode": "list"
+        }
+      },
+      "title": "Unpublished and blocked events",
+      "fieldConfig": {
+        "overrides": [],
+        "defaults": {}
+      },
+      "gridPos": {
+        "y": 8.0,
+        "h": 8,
+        "w": 12,
+        "x": 12
+      },
+      "id": 4,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      }
+    },
+    {
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (result) (rate(ledgerflow_webhook_attempts_total[5m]))"
+        }
+      ],
+      "type": "timeseries",
+      "options": {
+        "legend": {
+          "placement": "bottom",
+          "displayMode": "list"
+        }
+      },
+      "title": "Webhook delivery results",
+      "fieldConfig": {
+        "overrides": [],
+        "defaults": {}
+      },
+      "gridPos": {
+        "y": 16.0,
+        "h": 8,
+        "w": 12,
+        "x": 0
+      },
+      "id": 5,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      }
+    },
+    {
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "hikaricp_connections_active or hikaricp_connections_pending"
+        }
+      ],
+      "type": "timeseries",
+      "options": {
+        "legend": {
+          "placement": "bottom",
+          "displayMode": "list"
+        }
+      },
+      "title": "Database pool connections",
+      "fieldConfig": {
+        "overrides": [],
+        "defaults": {}
+      },
+      "gridPos": {
+        "y": 16.0,
+        "h": 8,
+        "w": 12,
+        "x": 12
+      },
+      "id": 6,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      }
+    },
+    {
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (area) (jvm_memory_used_bytes)"
+        }
+      ],
+      "type": "timeseries",
+      "options": {
+        "legend": {
+          "placement": "bottom",
+          "displayMode": "list"
+        }
+      },
+      "title": "JVM memory bytes",
+      "fieldConfig": {
+        "overrides": [],
+        "defaults": {}
+      },
+      "gridPos": {
+        "y": 24.0,
+        "h": 8,
+        "w": 12,
+        "x": 0
+      },
+      "id": 7,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      }
+    },
+    {
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "ledgerflow_reconciliation_problem_runs"
+        }
+      ],
+      "type": "timeseries",
+      "options": {
+        "legend": {
+          "placement": "bottom",
+          "displayMode": "list"
+        }
+      },
+      "title": "Reconciliation problem reports",
+      "fieldConfig": {
+        "overrides": [],
+        "defaults": {}
+      },
+      "gridPos": {
+        "y": 24.0,
+        "h": 8,
+        "w": 12,
+        "x": 12
+      },
+      "id": 8,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      }
+    }
+  ]
+}

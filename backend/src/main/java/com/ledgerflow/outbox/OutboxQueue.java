@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class OutboxQueue {
     private final JdbcTemplate jdbc;
     public OutboxQueue(JdbcTemplate jdbc) { this.jdbc = jdbc; }
-    public record Claimed(UUID id, UUID merchant, String aggregateType, UUID aggregateId, String payload, UUID leaseToken, int attempts) {
+    public record Claimed(UUID id, UUID merchant, String aggregateType, UUID aggregateId, String payload, UUID leaseToken, int attempts, String traceContext) {
         public String messageKey() { return merchant + ":" + aggregateType + ":" + aggregateId; }
     }
 
@@ -27,9 +27,9 @@ public class OutboxQueue {
                   order by e.created_at,e.id limit 10 for update skip locked
                 )
                 update outbox_event e set state='IN_FLIGHT',lease_token=gen_random_uuid(),lease_until=now()+interval '60 seconds',attempts=attempts+1
-                from eligible where e.id=eligible.id returning e.id,e.merchant_id,e.aggregate_type,e.aggregate_id,e.payload,e.lease_token,e.attempts
+                from eligible where e.id=eligible.id returning e.id,e.merchant_id,e.aggregate_type,e.aggregate_id,e.payload,e.lease_token,e.attempts,e.trace_context
                 """, (rs, row) -> new Claimed(rs.getObject(1, UUID.class), rs.getObject(2, UUID.class), rs.getString(3),
-                        rs.getObject(4, UUID.class), rs.getString(5), rs.getObject(6, UUID.class), rs.getInt(7)));
+                        rs.getObject(4, UUID.class), rs.getString(5), rs.getObject(6, UUID.class), rs.getInt(7), rs.getString(8)));
     }
 
     @Transactional

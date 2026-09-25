@@ -66,6 +66,7 @@ class WebhookIntegrationTest extends IntegrationSupport {
     @Autowired WebhookTransport transport;
     @Autowired WebhookSecrets secrets;
     @Autowired JdbcTemplate jdbc;
+    @Autowired com.ledgerflow.shared.Telemetry telemetry;
 
     @Test
     void signedDeliveryRetriesOnceDeduplicatesAndSupportsAuditedReplay() throws Exception {
@@ -80,7 +81,7 @@ class WebhookIntegrationTest extends IntegrationSupport {
         webhooks.consume(event); webhooks.consume(event);
         assertThat(jdbc.queryForObject("select count(*) from webhook_delivery where event_id=?", Integer.class, event.id())).isEqualTo(1);
         UUID delivery = jdbc.queryForObject("select id from webhook_delivery where event_id=?", UUID.class, event.id());
-        var dispatcher = new WebhookDispatcher(queue, transport, secrets);
+        var dispatcher = new WebhookDispatcher(queue, transport, secrets, telemetry);
         dispatcher.dispatchOnce();
         assertThat(state(delivery)).isEqualTo("PENDING");
         assertThat(SIGNATURE.get()).isEqualTo("v1=" + WebhookSecrets.signature(secret, Long.parseLong(TIMESTAMP.get()), RECEIVED.get()));

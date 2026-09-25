@@ -14,7 +14,8 @@ import tools.jackson.databind.ObjectMapper;
 public class Outbox {
     private final JdbcTemplate jdbc;
     private final ObjectMapper json;
-    public Outbox(JdbcTemplate jdbc, ObjectMapper json) { this.jdbc = jdbc; this.json = json; }
+    private final com.ledgerflow.shared.Telemetry telemetry;
+    public Outbox(JdbcTemplate jdbc, ObjectMapper json, com.ledgerflow.shared.Telemetry telemetry) { this.jdbc = jdbc; this.json = json; this.telemetry = telemetry; }
 
     public record Event(UUID id, int schemaVersion, String type, Instant occurredAt, UUID merchantId,
                         String aggregateType, UUID aggregateId, long aggregateVersion, int eventIndex,
@@ -26,9 +27,10 @@ public class Outbox {
         var event = new Event(id, 1, type, Instant.now(), merchant, aggregateType, aggregateId, version, 0,
                 MDC.get("requestId"), Map.copyOf(data));
         jdbc.update("""
-                insert into outbox_event(id,merchant_id,aggregate_type,aggregate_id,aggregate_version,event_type,payload)
-                values (?,?,?,?,?,?,?::jsonb)
-                """, id, merchant, aggregateType, aggregateId, version, type, json.writeValueAsString(event));
+                insert into outbox_event(id,merchant_id,aggregate_type,aggregate_id,aggregate_version,event_type,payload,trace_context)
+                values (?,?,?,?,?,?,?::jsonb,?)
+                """, id, merchant, aggregateType, aggregateId, version, type, json.writeValueAsString(event), telemetry.capture());
+        telemetry.committedEvent(type);
         return id;
     }
 }
