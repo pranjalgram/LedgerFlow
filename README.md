@@ -2,7 +2,7 @@
 
 A simulated payment, wallet, and double-entry ledger platform being developed as a modular Java application. No real money, bank integration, or payment credentials are involved.
 
-**Status: architecture, foundation, identity and immutable ledger are implemented and tested. Wallet/payment workflows are next.** The backend has registration/login, JWT validation, refresh rotation/revocation, merchant memberships, role enforcement and a database-enforced posting engine. The React shell displays live readiness. See [implementation status](docs/IMPLEMENTATION.md) for phase gates and evidence; design documents describe the target behavior.
+**Status: identity, immutable ledger, wallets, funding simulation, transfers and persistent idempotency are implemented and tested. Payments/refunds and event delivery are next.** The React shell displays live readiness. See [implementation status](docs/IMPLEMENTATION.md) for phase gates and evidence; design documents describe the target behavior.
 
 ## Engineering focus
 
@@ -103,6 +103,8 @@ Open http://localhost:5173. Vite proxies API and readiness calls to localhost:80
 Register with `POST /api/v1/auth/register` and JSON `{"email":"owner@example.test","password":"choose-a-long-local-password","merchantName":"Acme Commerce"}`. Login at `/api/v1/auth/login` with email/password. Use the returned accessToken as a Bearer token and registration's merchantId as `X-Merchant-Id` on `/api/v1/merchant`. Refresh/logout accept `{"refreshToken":"<returned-token>"}`. Secrets are never printed by the development key generator or stored in the repository. Keep this local until the planned rate limiting and deployment controls are installed.
 
 ## Verification
+
+To enable simulated funding, set `SPRING_PROFILES_ACTIVE=demo` when starting the backend. Create wallets through `POST /api/v1/wallets` with label, kind (`CUSTOMER` or `SETTLEMENT`) and currency (`INR`). Fund via `POST /api/v1/wallets/{id}/funding`, then transfer through `/api/v1/transfers`. Both money endpoints require Idempotency-Key and integer minor-unit amount/currency. `1000` means INR 10.00. Read balances at `/wallets/{id}/balance`, history at `/wallets/{id}/transactions`, and journal entries at `/ledger/transactions/{id}`. No Kafka publishing is claimed yet; event intent is stored transactionally.
 
 ```bash
 cd backend

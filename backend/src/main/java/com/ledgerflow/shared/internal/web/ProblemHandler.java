@@ -4,6 +4,9 @@ import com.ledgerflow.shared.DomainException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.net.URI;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.CannotAcquireLockException;
+import org.springframework.dao.QueryTimeoutException;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -26,6 +29,12 @@ class ProblemHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     ProblemDetail conflict(HttpServletRequest request) {
         return problem(409, "constraint-conflict", "The operation conflicts with an existing record or invariant.", request);
+    }
+
+    @ExceptionHandler({CannotAcquireLockException.class, QueryTimeoutException.class})
+    ResponseEntity<ProblemDetail> busy(HttpServletRequest request) {
+        return ResponseEntity.status(503).header("Retry-After", "1")
+                .body(problem(503, "temporarily-busy", "Retry this command using the same idempotency key.", request));
     }
 
     private ProblemDetail problem(int status, String code, String detail, HttpServletRequest request) {

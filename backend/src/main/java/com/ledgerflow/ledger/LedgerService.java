@@ -1,6 +1,7 @@
 package com.ledgerflow.ledger;
 
 import com.ledgerflow.shared.Money;
+import com.ledgerflow.outbox.Outbox;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -14,8 +15,15 @@ import tools.jackson.databind.ObjectMapper;
 public class LedgerService {
     private final JdbcTemplate jdbc;
     private final ObjectMapper json;
+    private final Outbox outbox;
 
-    public LedgerService(JdbcTemplate jdbc, ObjectMapper json) { this.jdbc = jdbc; this.json = json; }
+    public LedgerService(JdbcTemplate jdbc, ObjectMapper json, Outbox outbox) { this.jdbc = jdbc; this.json = json; this.outbox = outbox; }
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    public Optional<UUID> cashControl(UUID merchantId, Money.Currency currency) {
+        return jdbc.query("select id from ledger_account where merchant_id=? and currency=? and purpose='CASH_CONTROL'",
+                (rs, row) -> rs.getObject(1, UUID.class), merchantId, currency.name()).stream().findFirst();
+    }
 
     @Transactional(propagation = Propagation.MANDATORY)
     public UUID createAccount(UUID merchantId, Money.Currency currency, boolean cashControl) {
@@ -30,8 +38,11 @@ public class LedgerService {
         UUID id = UUID.randomUUID();
         String entries = json.writeValueAsString(posting.entries().stream().map(entry -> Map.of(
                 "account_id", entry.accountId(), "side", entry.side().name(), "amount", entry.amountMinor())).toList());
-        return Optional.ofNullable(jdbc.queryForObject("select post_journal(?,?,?,?,?,?::jsonb,?)", UUID.class,
+        UUID posted = jdbc.queryForObject("select post_journal(?,?,?,?,?,?::jsonb,?)", UUID.class,
                 id, posting.merchantId(), posting.currency().name(), posting.businessType(), posting.businessId(), entries,
-                posting.reversesTransactionId()));
+                posting.reversesTransactionId());
+        if (posted != null) outbox.append(posting.merchantId(), "ledger.transaction.posted", "ledger", posted, 1,
+                Map.of("ledgerTransactionId", posted, "currency", posting.currency().name(), "businessType", posting.businessType(), "businessId", posting.businessId()));
+        return Optional.ofNullable(posted);
     }
 }

@@ -14,7 +14,7 @@ At each code phase: compile backend, run unit/architecture and relevant real-inf
 | 1 | Gradle wrapper/Boot health + Flyway baseline/PostgreSQL container, React shell, CI; clean builds and health integration test | Complete |
 | 2 | Identity/merchant/RBAC and signing-key foundations; login/refresh/revoke/tenant-isolation tests | Complete |
 | 3 | Restricted DB posting function, balanced immutable ledger/projection; malformed/append/mutate/rollback tests | Complete |
-| 4 | Wallet/funding/transfer/idempotency; 100-request spending and duplicate races | Pending |
+| 4 | Wallet/funding/transfer/idempotency; 100-request spending and duplicate races | Complete |
 | 5 | Payment lifecycle/API-key access/ledger capture; invalid transition and replay tests | Pending |
 | 6 | Partial/full refunds; concurrent sum limit and insufficient-settlement tests | Pending |
 | 7 | Outbox/Kafka/consumer markers/DLT; publish-crash, duplicate and broker-down tests | Pending |
@@ -27,6 +27,8 @@ At each code phase: compile backend, run unit/architecture and relevant real-inf
 | 14 | Full clean build/test/start/seed/E2E verification, docs audit, interview/resume | Pending |
 
 ## Test design
+
+Phase 4 evidence: backend build passed (5 unit/architecture tests, 16 PostgreSQL integration tests). With 1,000,000 minor units and 100 concurrent transfers of 100,000, exactly 10 were accepted and 90 rejected; source ended at zero, destination at 1,000,000 and all journals balanced. Twenty concurrent identical requests returned one stored response and created one transfer. Tests verify fingerprint mismatch, expired-key tombstones, fractional amount rejection and cross-tenant wallet isolation. Audit, ledger, projection, outbox intent and idempotency response commit together. Frontend lint/typecheck/2 tests pass; Compose config passes. Kafka publication is not implemented yet; committed event intent is durable in outbox_event.
 
 Phase 3 evidence: backend build passed with 4 unit/architecture tests and 12 PostgreSQL integration tests. Ledger tests prove balanced postings/projection, insufficient-funds no-op, transaction rollback, forbidden direct writes, malformed/cross-tenant rejection, empty-journal deferred rejection, old-journal append rejection, exact reversal and duplicate business-reference rejection. Frontend lint/typecheck/2 tests pass. Compose bootstrap started PostgreSQL with separate login and non-login roles; the packaged application applied migrations and readiness returned UP. SQL privilege inspection confirmed runtime direct entry INSERT=false, account UPDATE=false, posting EXECUTE=true. Host port 5432 was unavailable, so ignored local .env uses 55432. Financial command APIs are Phase 4 onward, not implied by the ledger engine.
 

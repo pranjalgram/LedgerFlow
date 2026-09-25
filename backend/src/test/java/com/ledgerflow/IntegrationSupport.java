@@ -21,11 +21,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 @Tag("integration")
+@ActiveProfiles("demo")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 abstract class IntegrationSupport {
     static final PostgreSQLContainer DATABASE = new PostgreSQLContainer("postgres:18.6");
@@ -52,6 +54,8 @@ abstract class IntegrationSupport {
         registry.add("spring.flyway.url", DATABASE::getJdbcUrl);
         registry.add("spring.flyway.user", DATABASE::getUsername);
         registry.add("spring.flyway.password", DATABASE::getPassword);
+        registry.add("spring.datasource.hikari.maximum-pool-size", () -> 20);
+        registry.add("spring.datasource.hikari.connection-timeout", () -> 10000);
         registry.add("ledgerflow.auth.private-key", () -> KEYS.resolve("private.pem").toUri().toString());
         registry.add("ledgerflow.auth.public-key", () -> KEYS.resolve("public.pem").toUri().toString());
     }
@@ -63,10 +67,16 @@ abstract class IntegrationSupport {
 
     protected HttpResponse<String> request(String method, String path, Object body, String token, UUID merchant)
             throws IOException, InterruptedException {
+        return request(method, path, body, token, merchant, null);
+    }
+
+    protected HttpResponse<String> request(String method, String path, Object body, String token, UUID merchant, String key)
+            throws IOException, InterruptedException {
         var request = HttpRequest.newBuilder(URI.create("http://localhost:" + port + path))
-                .timeout(Duration.ofSeconds(15)).header("Content-Type", "application/json");
+                .timeout(Duration.ofSeconds(30)).header("Content-Type", "application/json");
         if (token != null) request.header("Authorization", "Bearer " + token);
         if (merchant != null) request.header("X-Merchant-Id", merchant.toString());
+        if (key != null) request.header("Idempotency-Key", key);
         request.method(method, body == null ? HttpRequest.BodyPublishers.noBody()
                 : HttpRequest.BodyPublishers.ofString(json.writeValueAsString(body)));
         try (var client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build()) {
