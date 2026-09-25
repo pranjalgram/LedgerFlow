@@ -27,3 +27,9 @@ Consumer groups `ledgerflow-webhooks-v1` and `ledgerflow-notifications-v1` indep
 Use bounded blocking retries for transient database failures, with backoff below max.poll.interval and partition pause/backpressure when needed. Malformed/unsupported poison events go to DLT with original payload and sanitized error metadata. Commit offset only after DLT send acknowledgement; DLT failure must stop advancement. DLT replay is authenticated and audited and preserves original event ID. Skipping poison events means downstream event arrival may have gaps; webhook scheduling uses independent immutable events and makes no state reconstruction claim.
 
 Trace context travels as W3C traceparent/tracestate headers sourced from the persisted outbox context. New consumer spans link to the originating context; do not keep an HTTP span open while waiting for asynchronous delivery.
+
+## Implemented consumers
+
+`ledgerflow-notifications-v1` inserts a durable notification and a `(consumer_name,event_id)` marker in one database transaction. Record offsets are acknowledged only after successful return. The listener retries three times with exponential backoff, then publishes to the same partition in `.dlt` with confirmed send. Invalid envelopes go directly to DLT. The terminal DLT inspector persists records uniquely by Kafka coordinates and retries database outages indefinitely at five-second intervals instead of recursively dead-lettering. Stored coordinates currently identify the DLT record, not the original source record.
+
+`GET /api/v1/notifications` provides tenant-authorized keyset pagination. DLT operator UI/replay and retention jobs are not yet implemented. Tracing propagation is scheduled for the observability phase.

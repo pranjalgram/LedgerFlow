@@ -21,6 +21,28 @@ spring:
     deserialization:
       fail-on-unknown-properties: true
       accept-float-as-int: false
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    admin:
+      auto-create: ${ledgerflow.events.enabled}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      properties:
+        enable.idempotence: true
+        delivery.timeout.ms: 3000
+        request.timeout.ms: 2000
+        max.block.ms: 2000
+        linger.ms: 5
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      enable-auto-commit: false
+      auto-offset-reset: earliest
+      max-poll-records: 20
+    listener:
+      ack-mode: record
 server:
   port: ${PORT:8080}
   error:
@@ -46,6 +68,9 @@ logging:
     format:
       console: ecs
 ledgerflow:
+  events:
+    enabled: ${EVENTS_ENABLED:false}
+    topic: ledgerflow.events.v1
   auth:
     issuer: ${JWT_ISSUER:urn:ledgerflow:local}
     private-key: ${JWT_PRIVATE_KEY:file:../.local-secrets/jwt-private.pem}

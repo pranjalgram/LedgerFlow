@@ -11,3 +11,9 @@ On transient broker failure release/reschedule with capped exponential backoff a
 Crash after DB commit but before publish: row remains. Crash after Kafka acknowledgement but before marking: row republishes, producing duplicate delivery. Consumer's ProcessedEvent unique key suppresses duplicate local effects in its own transaction. Kafka producer idempotence helps network retries within a producer session but cannot solve the cross-database crash window. Guarantee: eventual at-least-once publication while dependencies recover and blocked rows are resolved, not exactly-once delivery.
 
 Database lease work and financial requests share a bounded pool initially; publisher concurrency is limited so Kafka outages cannot exhaust financial database capacity. A later worker deployment may run the same application with API scheduling disabled/enabled by explicit role configuration.
+
+## Implemented worker
+
+Enable `EVENTS_ENABLED=true` and set `KAFKA_BOOTSTRAP_SERVERS` after starting the Compose events profile. Disabled delivery leaves durable outbox rows pending. The worker claims ten rows with 60-second leases; each send waits at most five seconds. Broker errors reschedule with exponential delay (currently maximum 256 seconds plus jitter). Invalid envelopes block that aggregate. Administrative retry, backlog metrics and archival remain future operations work.
+
+Normal first publication follows aggregate sequence. A stalled old publisher can still send a duplicate after its lease expires; fencing protects database state, not Kafka. Consumers must deduplicate IDs and any future state projection must reject stale versions. Notifications are immutable event facts, so they do not apply version-sensitive state updates.

@@ -2,7 +2,7 @@
 
 A simulated payment, wallet, and double-entry ledger platform being developed as a modular Java application. No real money, bank integration, or payment credentials are involved.
 
-**Status: identity, immutable ledger, wallets, transfers, idempotent payments/refunds and merchant API keys are implemented and tested. Event delivery is next.** The React shell displays live readiness. See [implementation status](docs/IMPLEMENTATION.md) for phase gates and evidence; design documents describe the target behavior.
+**Status: identity, immutable ledger, wallets, transfers, idempotent payments/refunds and merchant API keys are implemented and tested. Kafka outbox delivery, persistent consumer deduplication, notifications and dead-letter storage are implemented.** The React shell displays live readiness. See [implementation status](docs/IMPLEMENTATION.md) for phase gates and evidence; design documents describe the target behavior.
 
 ## Engineering focus
 

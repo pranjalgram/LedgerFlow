@@ -5,7 +5,7 @@ if ($JavaHome) { $env:JAVA_HOME = $JavaHome }
 if (-not (Test-Path (Join-Path $env:JAVA_HOME 'bin/java.exe'))) {
     throw 'Set JAVA_HOME to Java 25 or pass -JavaHome with the JDK directory.'
 }
-$allowed = @('DB_URL','DB_USERNAME','DB_PASSWORD','DB_MIGRATION_USERNAME','DB_MIGRATION_PASSWORD','PORT','JWT_PRIVATE_KEY','JWT_PUBLIC_KEY','JWT_ISSUER','SPRING_PROFILES_ACTIVE')
+$allowed = @('DB_URL','DB_USERNAME','DB_PASSWORD','DB_MIGRATION_USERNAME','DB_MIGRATION_PASSWORD','PORT','JWT_PRIVATE_KEY','JWT_PUBLIC_KEY','JWT_ISSUER','SPRING_PROFILES_ACTIVE','EVENTS_ENABLED','KAFKA_BOOTSTRAP_SERVERS')
 $envPath = Join-Path $projectRoot '.env'
 if (Test-Path $envPath) {
     foreach ($line in Get-Content $envPath) {
