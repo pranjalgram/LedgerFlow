@@ -37,6 +37,15 @@ class ProblemHandler {
                 .body(problem(503, "temporarily-busy", "Retry this command using the same idempotency key.", request));
     }
 
+    @ExceptionHandler({org.springframework.dao.DataAccessResourceFailureException.class,
+            org.springframework.transaction.CannotCreateTransactionException.class,
+            org.springframework.transaction.TransactionSystemException.class,
+            org.springframework.orm.jpa.JpaSystemException.class})
+    ResponseEntity<ProblemDetail> databaseUnavailable(HttpServletRequest request) {
+        return ResponseEntity.status(503).header("Retry-After", "1")
+                .body(problem(503, "database-unavailable", "Retry after recovery using the same idempotency key for an unchanged command.", request));
+    }
+
     private ProblemDetail problem(int status, String code, String detail, HttpServletRequest request) {
         var problem = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(status), detail);
         problem.setType(URI.create("urn:ledgerflow:problem:" + code));

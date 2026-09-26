@@ -1,6 +1,6 @@
 # ADR-010: Integer minor units and explicit currency
 
-Status: accepted design, 2026-09-25. Implementation pending.
+Status: accepted and implemented; see IMPLEMENTATION.md for verification gates and documented refinements.
 
 ## Context
 

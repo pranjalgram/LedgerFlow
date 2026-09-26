@@ -1,6 +1,6 @@
 # Scaling hypothesis
 
-These stages are design discussion, not measured throughput claims. Workload shape, hot accounts, storage latency, transaction sizes, webhook endpoints and hardware dominate capacity. Run the supplied future load scripts and retain environment details before making performance claims.
+These stages are design discussion, not measured throughput claims. Workload shape, hot accounts, storage latency, transaction sizes, webhook endpoints and hardware dominate capacity. Run the supplied load scripts and retain environment details before making performance claims.
 
 | Approximate workload | Evolution to evaluate |
 | --- | --- |

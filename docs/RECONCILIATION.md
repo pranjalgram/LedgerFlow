@@ -23,7 +23,7 @@ Tests inject corruption using a privileged test-only connection that disables tr
 
 `GET /api/v1/overview` returns lifetime INR payment/capture/refund totals, aggregate wallet liabilities, and 14 UTC days of payment counts. Monetary aggregates are decimal strings of integer minor units. `GET /api/v1/operations/health`, `/operations/outbox`, `/operations/dead-letters`, and `/audit-events` expose tenant-scoped operational metadata without raw event payloads. Unknown-tenant poison messages are not visible to merchant users; platform operators inspect Kafka/database using restricted tooling.
 
-The `operations` module composes read-only SQL models. It does not become an owner of financial state. The dashboard is implemented in Phase 10. DLT replay tooling and automated alerts are not yet provided.
+The `operations` module composes read-only SQL models. It does not become an owner of financial state. The dashboard is implemented in Phase 10. DLT replay tooling is not provided. Prometheus alert rules exist, but external alert routing is not configured.
 
 ## Limits
 

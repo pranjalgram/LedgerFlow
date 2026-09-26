@@ -55,7 +55,8 @@ abstract class IntegrationSupport {
         registry.add("spring.flyway.url", DATABASE::getJdbcUrl);
         registry.add("spring.flyway.user", DATABASE::getUsername);
         registry.add("spring.flyway.password", DATABASE::getPassword);
-        registry.add("spring.datasource.hikari.maximum-pool-size", () -> 20);
+        // Several cached test application contexts share one database; budget pools collectively.
+        registry.add("spring.datasource.hikari.maximum-pool-size", () -> 10);
         registry.add("spring.datasource.hikari.connection-timeout", () -> 10000);
         registry.add("ledgerflow.reconciliation.enabled", () -> false);
         registry.add("ledgerflow.auth.private-key", () -> KEYS.resolve("private.pem").toUri().toString());

@@ -27,7 +27,7 @@ spec:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             capabilities: {drop: [ALL]}
-          resources: {{ toYaml .Values.frontend.resources | nindent 12 }}
+          resources:{{ toYaml .Values.frontend.resources | nindent 12 }}
           livenessProbe:
             httpGet: {path: /healthz, port: http}
             periodSeconds: 15

@@ -1,6 +1,6 @@
 # Architecture decision records
 
-All records are accepted as Phase 0 design decisions, subject to implementation verification. Changes require a superseding ADR with the reason and migration implications.
+Records document implemented choices and explicit later refinements. See IMPLEMENTATION.md for verification evidence. Changes require a superseding ADR with the reason and migration implications.
 
 | ADR | Decision |
 | --- | --- |
@@ -14,3 +14,4 @@ All records are accepted as Phase 0 design decisions, subject to implementation 
 | [008](adr/008-redis.md) | Redis for rate limiting, no money state |
 | [009](adr/009-authentication.md) | First-party credentials with Spring JWT validation |
 | [010](adr/010-money.md) | Explicit currency and integer minor units |
+| [011](adr/011-redis-outage.md) | Fail closed for all API routes on Redis outage; supersedes ADR-008 fallback |

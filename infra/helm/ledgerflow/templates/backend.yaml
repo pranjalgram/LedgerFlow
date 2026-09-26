@@ -43,7 +43,7 @@ spec:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             capabilities: {drop: [ALL]}
-          resources: {{ toYaml .Values.backend.resources | nindent 12 }}
+          resources:{{ toYaml .Values.backend.resources | nindent 12 }}
           startupProbe:
             httpGet: {path: /actuator/health/liveness, port: http}
             periodSeconds: 5

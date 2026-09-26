@@ -21,10 +21,10 @@ At each code phase: compile backend, run unit/architecture and relevant real-inf
 | 8 | Webhook encrypted secrets, approved/pinned destinations, signing, retries/replay; 500/timeout/duplicate tests | Complete |
 | 9 | Snapshot reconciliation persisted reports; injected corruption and repeated-run tests | Complete (UI in Phase 10) |
 | 10 | Dashboard with server-backed forms, errors/loading/pagination; RTL + Playwright critical flow | Complete |
-| 11 | Metrics/logs/traces and actual provisioned observability verification | Pending |
-| 12 | Runtime images, Compose full workflow, K8s/Helm probes/resources/secret references | Pending |
-| 13 | Redis limits, fault/load scripts, SQL plans; actual measured results only | Pending |
-| 14 | Full clean build/test/start/seed/E2E verification, docs audit, interview/resume | Pending |
+| 11 | Metrics/logs/traces and actual provisioned observability verification | Complete; full exported webhook trace remains uninspected |
+| 12 | Runtime images, Compose full workflow, K8s/Helm probes/resources/secret references | Complete; cluster rollout unverified |
+| 13 | Redis limits, fault/load scripts, SQL plans; actual measured results only | Complete; load smoke only, no capacity claim |
+| 14 | Full clean build/test/start/seed/E2E verification, docs audit, interview/resume | Complete with disclosed scope/deployment limits |
 
 ## Test design
 
@@ -90,3 +90,11 @@ Non-root backend/frontend images built from source; separate Flyway container mi
 ## Phase 13 verification
 
 Backend build passed with 9 unit/architecture and 44 integration tests, including real Redis atomic concurrency, TTL expiry, verified-principal isolation, HTTP throttling and paused-Redis recovery. Packaged financial Chromium flow passed with Redis limiting enabled. k6 2.3.0 eight-second smoke passed all checks; no capacity claim. Read-only PostgreSQL EXPLAIN ANALYZE output is retained with small-fixture limitations. Existing Kafka/webhook retries remain bounded and idempotent; no blind financial retry or speculative index was added. See REDIS.md and PERFORMANCE.md.
+
+## Phase 14 verification (2026-09-26)
+
+Final backend build passed: 9 unit/architecture tests and 46 integration tests against PostgreSQL, Kafka and Redis. Added generated OpenAPI/Swagger verification (42 real paths) and a paused-PostgreSQL outage/recovery test. The latter found rollback exceptions being masked as 403; those now return safe retryable 503 responses. Cached test context pools were reduced to 10 connections to remain within the shared container database budget; the 100-request spending test still passes.
+
+Frontend lint/typecheck/four tests/production build passed. Chromium passed the real packaged financial journey against a separate fresh Compose stack. Its new PostgreSQL volume applied all 10 Flyway migrations, then the demo seed created succeeded/failed/partial/full refund examples and passed reconciliation. All 39 events present after seed plus browser flow were published and both consumer groups stored 39 processed-event markers. No external webhook endpoint was seeded without explicit origin configuration; real HTTP retry/signature behavior is covered by integration tests.
+
+Helm lint and render/example consistency passed; no Kubernetes context exists. Source text hygiene passed and npm audit reported zero vulnerabilities at execution time (including development dependencies); no complete backend advisory scanner claim. k6 smoke and small-fixture SQL plans are documented without production-scale extrapolation. README/API/security/database/ADR documents were reviewed against source; interview/resume statements use only implemented evidence. Remote GitHub CI execution, cluster rollout, managed-provider failover/restore and a full exported webhook trace remain unverified. Other known limitations are listed in README.md.

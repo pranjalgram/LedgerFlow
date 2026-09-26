@@ -1,6 +1,6 @@
 # ADR-008: Redis only for rate limiting initially
 
-Status: accepted design, 2026-09-25. Implementation pending.
+Status: accepted and implemented; see IMPLEMENTATION.md for verification gates and documented refinements.
 
 ## Context
 
@@ -8,7 +8,7 @@ Shared rate limits are useful; authoritative funds and idempotency cannot disapp
 
 ## Decision
 
-Atomic TTL counters for credential/mutation limits. Fail closed on sensitive routes, allow bounded authenticated reads on outage; no financial locks or balances.
+Atomic TTL counters; no financial locks or balances. The initial read-fallback proposal is superseded by ADR-011: all API requests fail closed during a Redis outage.
 
 ## Alternatives
 

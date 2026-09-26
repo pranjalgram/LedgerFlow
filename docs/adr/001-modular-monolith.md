@@ -1,6 +1,6 @@
 # ADR-001: Modular monolith before microservices
 
-Status: accepted design, 2026-09-25. Implementation pending.
+Status: accepted and implemented; see IMPLEMENTATION.md for verification gates and documented refinements.
 
 ## Context
 

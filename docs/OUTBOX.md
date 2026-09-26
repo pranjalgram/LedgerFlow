@@ -14,6 +14,6 @@ Database lease work and financial requests share a bounded pool initially; publi
 
 ## Implemented worker
 
-Enable `EVENTS_ENABLED=true` and set `KAFKA_BOOTSTRAP_SERVERS` after starting the Compose events profile. Disabled delivery leaves durable outbox rows pending. The worker claims ten rows with 60-second leases; each send waits at most five seconds. Broker errors reschedule with exponential delay (currently maximum 256 seconds plus jitter). Invalid envelopes block that aggregate. Administrative retry, backlog metrics and archival remain future operations work.
+Enable `EVENTS_ENABLED=true` and set `KAFKA_BOOTSTRAP_SERVERS` after starting the Compose events profile. Disabled delivery leaves durable outbox rows pending. The worker claims ten rows with 60-second leases; each send waits at most five seconds. Broker errors reschedule with exponential delay (currently maximum 256 seconds plus jitter). Invalid envelopes block that aggregate. Backlog metrics are implemented. Administrative blocked-event retry and archival remain operator/future work.
 
 Normal first publication follows aggregate sequence. A stalled old publisher can still send a duplicate after its lease expires; fencing protects database state, not Kafka. Consumers must deduplicate IDs and any future state projection must reject stale versions. Notifications are immutable event facts, so they do not apply version-sensitive state updates.

@@ -15,6 +15,9 @@ spring:
     hikari:
       maximum-pool-size: 10
       connection-timeout: 3000
+      data-source-properties:
+        connectTimeout: 3
+        socketTimeout: 35
   jpa:
     open-in-view: false
     hibernate:
@@ -60,6 +63,11 @@ server:
     include-stacktrace: never
     include-binding-errors: never
   shutdown: graceful
+springdoc:
+  api-docs:
+    enabled: ${API_DOCS_ENABLED:false}
+  swagger-ui:
+    enabled: ${API_DOCS_ENABLED:false}
 management:
   otlp:
     metrics:

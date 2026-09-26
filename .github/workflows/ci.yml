@@ -23,7 +23,7 @@ jobs:
           java-version: '25'
       - uses: gradle/actions/setup-gradle@v4
       - name: Check whitespace
-        run: git diff --check
+        run: python ../scripts/check-format.py
       - name: Compile, architecture tests, PostgreSQL integration tests, package
         run: bash gradlew build --no-daemon
       - uses: actions/upload-artifact@v4
@@ -49,11 +49,25 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      - run: npm audit --omit=dev --audit-level=high
   compose:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - run: docker compose --env-file .env.example --profile app --profile events --profile observability config --quiet
+      - name: Download checksum-verified Helm
+        run: |
+          cd "$RUNNER_TEMP"
+          curl -fsSLO https://get.helm.sh/helm-v4.3.0-linux-amd64.tar.gz
+          curl -fsSLO https://get.helm.sh/helm-v4.3.0-linux-amd64.tar.gz.sha256sum
+          sha256sum -c helm-v4.3.0-linux-amd64.tar.gz.sha256sum
+          tar -xzf helm-v4.3.0-linux-amd64.tar.gz
+      - name: Validate chart and rendered example
+        run: |
+          "$RUNNER_TEMP/linux-amd64/helm" lint infra/helm/ledgerflow
+          "$RUNNER_TEMP/linux-amd64/helm" template ledgerflow infra/helm/ledgerflow --set ingress.enabled=true > "$RUNNER_TEMP/rendered.yaml"
+          diff -u infra/kubernetes/ledgerflow.yaml "$RUNNER_TEMP/rendered.yaml"
+          cmp infra/docker/nginx.conf infra/helm/ledgerflow/files/nginx.conf
   packaged-e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 25

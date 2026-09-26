@@ -27,4 +27,4 @@ metadata:
   name: {{ .Release.Name }}-nginx
 data:
   nginx.conf: |
-{{ .Files.Get "files/nginx.conf" | replace "http://backend:8080" (printf "http://%s-backend:8080" .Release.Name) | indent 4 }}
+{{ .Files.Get "files/nginx.conf" | trimSuffix "\n" | replace "http://backend:8080" (printf "http://%s-backend:8080" .Release.Name) | indent 4 }}

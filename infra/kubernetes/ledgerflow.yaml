@@ -79,7 +79,6 @@ data:
         location / { try_files $uri /index.html; expires -1; }
       }
     }
-    
 
 ---
 # Source: ledgerflow/templates/backend.yaml
@@ -116,7 +115,7 @@ spec:
     metadata:
       labels: {app: ledgerflow-backend}
       annotations:
-        checksum/config: a6d1b0ff0a2cd723bee5536537eab41948ce2812cf0589bab9f78d7c28a6e83f
+        checksum/config: ebe3ead84fcc84ccb17ae3a645035127df87951cf1598609131f142b5e5f9eef
     spec:
       automountServiceAccountToken: false
       terminationGracePeriodSeconds: 60
@@ -145,7 +144,7 @@ spec:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             capabilities: {drop: [ALL]}
-          resources: 
+          resources:
             limits:
               cpu: "2"
               memory: 1Gi
@@ -191,7 +190,7 @@ spec:
     metadata:
       labels: {app: ledgerflow-frontend}
       annotations:
-        checksum/config: a6d1b0ff0a2cd723bee5536537eab41948ce2812cf0589bab9f78d7c28a6e83f
+        checksum/config: ebe3ead84fcc84ccb17ae3a645035127df87951cf1598609131f142b5e5f9eef
     spec:
       automountServiceAccountToken: false
       securityContext:
@@ -208,7 +207,7 @@ spec:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             capabilities: {drop: [ALL]}
-          resources: 
+          resources:
             limits:
               cpu: 500m
               memory: 128Mi

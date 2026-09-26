@@ -1,6 +1,6 @@
 # Ledger and money
 
-Status: posting engine, restricted roles, deferred validation, immutable history, projection and reversal implemented in Phase 3. Wallet spending concurrency is a Phase 4 gate. See IMPLEMENTATION.md for actual test evidence.
+Status: posting engine, restricted roles, deferred validation, immutable history, projection and reversal implemented in Phase 3. Wallet spending concurrency is verified with real PostgreSQL tests. See IMPLEMENTATION.md for actual test evidence.
 
 ## Units
 

@@ -55,3 +55,5 @@ HPA starts at two replicas and caps at five, with 300-second downscale stabiliza
 ## Validation status
 
 Local image builds and Compose startup passed. The standalone migration upgraded the local database through V10 and the API became healthy with Flyway disabled. Non-root UIDs were inspected. Chromium passed the complete financial flow against the packaged frontend at port 8088. Helm 4.3.0 lint and template rendering passed; no Kubernetes context is configured, so cluster rollout and HPA behavior are not claimed as tested. CI includes a clean-volume Docker/browser job; remote CI execution has not yet been observed.
+
+The final clean-stack check additionally created a new PostgreSQL volume, applied all ten migrations, ran the seed to a passing reconciliation report and passed the packaged Chromium journey on isolated ports. This exercised the local bootstrap path independently of the original development database.
