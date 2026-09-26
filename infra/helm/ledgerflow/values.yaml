@@ -1,0 +1,36 @@
+backend:
+  image: ghcr.io/your-organization/ledgerflow-backend:0.1.0
+  replicas: 2
+  resources:
+    requests: {cpu: 250m, memory: 512Mi}
+    limits: {cpu: '2', memory: 1Gi}
+frontend:
+  image: ghcr.io/your-organization/ledgerflow-frontend:0.1.0
+  replicas: 2
+  resources:
+    requests: {cpu: 50m, memory: 32Mi}
+    limits: {cpu: 500m, memory: 128Mi}
+database:
+  url: jdbc:postgresql://postgres.example.internal:5432/ledgerflow?sslmode=verify-full
+  username: ledgerflow_app
+kafka:
+  bootstrapServers: kafka.example.internal:9093
+  securityProtocol: SSL
+runtimeSecret: ledgerflow-runtime
+migrationSecret: ledgerflow-migration
+issuer: https://ledgerflow.example.com
+webhookAllowedOrigins: ''
+tracing:
+  enabled: false
+  sampleRate: '0.1'
+  endpoint: http://otel-collector.observability:4318/v1/traces
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  cpuPercent: 70
+ingress:
+  enabled: false
+  className: nginx
+  host: ledgerflow.example.com
+  tlsSecret: ledgerflow-tls

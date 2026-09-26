@@ -1,5 +1,73 @@
 name: ledgerflow
 services:
+  migrate:
+    profiles: ["app"]
+    build: {context: ., dockerfile: backend/Dockerfile, target: migration}
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-ledgerflow}
+      DB_MIGRATION_USERNAME: ${POSTGRES_USER:-ledgerflow_migrator}
+      DB_MIGRATION_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    depends_on:
+      postgres: {condition: service_healthy}
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+  backend:
+    profiles: ["app"]
+    build: {context: ., dockerfile: backend/Dockerfile, target: application}
+    ports: ["127.0.0.1:8080:8080"]
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-ledgerflow}
+      DB_USERNAME: ledgerflow_app
+      DB_PASSWORD: ${APP_DB_PASSWORD:?Set APP_DB_PASSWORD in .env}
+      SPRING_FLYWAY_ENABLED: 'false'
+      SPRING_CONFIG_IMPORT: configtree:/run/config/
+      JWT_PRIVATE_KEY: file:/run/keys/jwt-private.pem
+      JWT_PUBLIC_KEY: file:/run/keys/jwt-public.pem
+      JWT_ISSUER: ${JWT_ISSUER:-urn:ledgerflow:local}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-default}
+      EVENTS_ENABLED: ${EVENTS_ENABLED:-false}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:19092
+      WEBHOOK_ALLOWED_ORIGINS: ${WEBHOOK_ALLOWED_ORIGINS:-}
+      TRACING_EXPORT_ENABLED: ${TRACING_EXPORT_ENABLED:-false}
+      TRACING_SAMPLE_RATE: ${TRACING_SAMPLE_RATE:-0.1}
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://tempo:4318/v1/traces
+    volumes:
+      - ./.local-secrets/jwt-private.pem:/run/keys/jwt-private.pem:ro
+      - ./.local-secrets/jwt-public.pem:/run/keys/jwt-public.pem:ro
+      - ./.local-secrets/metrics-password:/run/config/ledgerflow.metrics.password:ro
+      - ./.local-secrets/webhook-key:/run/config/ledgerflow.webhooks.encryption-key:ro
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    healthcheck:
+      test: ["CMD", "java", "-cp", "/app/health", "Healthcheck"]
+      interval: 15s
+      timeout: 5s
+      start_period: 60s
+      retries: 5
+    mem_limit: 1g
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    restart: unless-stopped
+  frontend:
+    profiles: ["app"]
+    build: {context: ., dockerfile: frontend/Dockerfile}
+    ports: ["127.0.0.1:8088:8080"]
+    depends_on:
+      backend: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/healthz"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    restart: unless-stopped
   postgres:
     image: postgres:18.6
     environment:

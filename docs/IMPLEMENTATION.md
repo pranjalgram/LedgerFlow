@@ -82,3 +82,7 @@ Backend build remains green (8 unit/architecture, 36 integration tests). Fronten
 ## Phase 11 verification
 
 Backend build passed with 9 unit/architecture tests and 40 PostgreSQL/Kafka integration tests. New coverage verifies metrics authentication, HTTP trace persistence, context restoration, commit-only counters and real Kafka trace continuity into webhook jobs. Frontend lint/typecheck/four tests/build passed. Compose configuration, Prometheus rules, Grafana health and Tempo readiness passed. Live host scrape/export inspection remains pending after automatic tool review blocked the backend restart with local secrets. See OBSERVABILITY.md for exact instrumentation and deployment limits.
+
+## Phase 12 verification
+
+Non-root backend/frontend images built from source; separate Flyway container migrated through V10 before API startup. Compose health checks passed and Chromium's financial flow passed through packaged Nginx. Live Prometheus scrape and Tempo-exported HTTP/ledger/outbox spans were verified. Backend build passed (9 unit/architecture, 40 integration tests). Helm lint/template passed; no Kubernetes cluster context is available, so rollout remains unverified. Clean-volume packaged E2E is configured in CI; remote CI has not run here. See DEPLOYMENT.md for secret/bootstrap/managed-service prerequisites.

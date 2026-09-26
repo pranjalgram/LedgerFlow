@@ -6,6 +6,8 @@ plugins {
 group = "com.ledgerflow"
 version = "0.1.0-SNAPSHOT"
 
+springBoot { mainClass = "com.ledgerflow.LedgerFlowApplication" }
+
 java {
     toolchain { languageVersion = JavaLanguageVersion.of(25) }
 }

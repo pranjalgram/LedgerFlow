@@ -1,0 +1,308 @@
+---
+# Source: ledgerflow/templates/backend.yaml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: ledgerflow-backend
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels: {app: ledgerflow-backend}
+
+---
+# Source: ledgerflow/templates/config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ledgerflow-config
+data:
+  DB_URL: "jdbc:postgresql://postgres.example.internal:5432/ledgerflow?sslmode=verify-full"
+  DB_USERNAME: "ledgerflow_app"
+  SPRING_FLYWAY_ENABLED: 'false'
+  JWT_ISSUER: "https://ledgerflow.example.com"
+  JWT_PRIVATE_KEY: file:/run/keys/jwt-private.pem
+  JWT_PUBLIC_KEY: file:/run/keys/jwt-public.pem
+  EVENTS_ENABLED: 'true'
+  KAFKA_BOOTSTRAP_SERVERS: "kafka.example.internal:9093"
+  SPRING_KAFKA_PROPERTIES_SECURITY_PROTOCOL: "SSL"
+  WEBHOOK_ALLOWED_ORIGINS: ""
+  TRACING_EXPORT_ENABLED: "false"
+  TRACING_SAMPLE_RATE: "0.1"
+  OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "http://otel-collector.observability:4318/v1/traces"
+
+---
+# Source: ledgerflow/templates/config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ledgerflow-nginx
+data:
+  nginx.conf: |
+    worker_processes auto;
+    pid /tmp/nginx.pid;
+    error_log /dev/stderr warn;
+    events { worker_connections 1024; }
+    http {
+      include /etc/nginx/mime.types;
+      default_type application/octet-stream;
+      access_log off;
+      server_tokens off;
+      client_body_temp_path /tmp/client_temp;
+      proxy_temp_path /tmp/proxy_temp;
+      fastcgi_temp_path /tmp/fastcgi_temp;
+      uwsgi_temp_path /tmp/uwsgi_temp;
+      scgi_temp_path /tmp/scgi_temp;
+      server {
+        listen 8080;
+        root /usr/share/nginx/html;
+        client_max_body_size 128k;
+        add_header X-Content-Type-Options nosniff always;
+        add_header X-Frame-Options DENY always;
+        add_header Referrer-Policy no-referrer always;
+        add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" always;
+        location = /healthz { access_log off; return 200 'ok'; }
+        location /api/ {
+          proxy_pass http://ledgerflow-backend:8080;
+          proxy_http_version 1.1;
+          proxy_set_header Host $host;
+          proxy_set_header X-Forwarded-For $remote_addr;
+          proxy_connect_timeout 3s;
+          proxy_read_timeout 30s;
+        }
+        location = /actuator/health/readiness { proxy_pass http://ledgerflow-backend:8080; }
+        location /actuator/ { return 404; }
+        location /assets/ { try_files $uri =404; expires 1y; }
+        location / { try_files $uri /index.html; expires -1; }
+      }
+    }
+    
+
+---
+# Source: ledgerflow/templates/backend.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: ledgerflow-backend
+spec:
+  selector: {app: ledgerflow-backend}
+  ports: [{name: http, port: 8080, targetPort: http}]
+
+---
+# Source: ledgerflow/templates/frontend.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: ledgerflow-frontend
+spec:
+  selector: {app: ledgerflow-frontend}
+  ports: [{name: http, port: 8080, targetPort: http}]
+
+---
+# Source: ledgerflow/templates/backend.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ledgerflow-backend
+spec:
+  strategy:
+    rollingUpdate: {maxSurge: 1, maxUnavailable: 0}
+  selector:
+    matchLabels: {app: ledgerflow-backend}
+  template:
+    metadata:
+      labels: {app: ledgerflow-backend}
+      annotations:
+        checksum/config: a59bcaa1b5934c81e5c4ba7d1734b67c7206f467571304596881ada4e65753be
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 60
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: backend
+          image: "ghcr.io/your-organization/ledgerflow-backend:0.1.0"
+          ports: [{name: http, containerPort: 8080}]
+          envFrom:
+            - configMapRef: {name: ledgerflow-config}
+          env:
+            - name: DB_PASSWORD
+              valueFrom: {secretKeyRef: {name: ledgerflow-runtime, key: db-password}}
+            - name: METRICS_PASSWORD
+              valueFrom: {secretKeyRef: {name: ledgerflow-runtime, key: metrics-password}}
+            - name: WEBHOOK_ENCRYPTION_KEY
+              valueFrom: {secretKeyRef: {name: ledgerflow-runtime, key: webhook-key}}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          resources: 
+            limits:
+              cpu: "2"
+              memory: 1Gi
+            requests:
+              cpu: 250m
+              memory: 512Mi
+          startupProbe:
+            httpGet: {path: /actuator/health/liveness, port: http}
+            periodSeconds: 5
+            failureThreshold: 30
+          livenessProbe:
+            httpGet: {path: /actuator/health/liveness, port: http}
+            periodSeconds: 15
+          readinessProbe:
+            httpGet: {path: /actuator/health/readiness, port: http}
+            periodSeconds: 5
+            timeoutSeconds: 3
+          volumeMounts:
+            - {name: tmp, mountPath: /tmp}
+            - {name: keys, mountPath: /run/keys, readOnly: true}
+      volumes:
+        - name: tmp
+          emptyDir: {sizeLimit: 128Mi}
+        - name: keys
+          secret:
+            secretName: ledgerflow-runtime
+            defaultMode: 0440
+            items:
+              - {key: jwt-private.pem, path: jwt-private.pem}
+              - {key: jwt-public.pem, path: jwt-public.pem}
+
+---
+# Source: ledgerflow/templates/frontend.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ledgerflow-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels: {app: ledgerflow-frontend}
+  template:
+    metadata:
+      labels: {app: ledgerflow-frontend}
+      annotations:
+        checksum/config: a59bcaa1b5934c81e5c4ba7d1734b67c7206f467571304596881ada4e65753be
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        runAsGroup: 101
+        fsGroup: 101
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: frontend
+          image: "ghcr.io/your-organization/ledgerflow-frontend:0.1.0"
+          ports: [{name: http, containerPort: 8080}]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          resources: 
+            limits:
+              cpu: 500m
+              memory: 128Mi
+            requests:
+              cpu: 50m
+              memory: 32Mi
+          livenessProbe:
+            httpGet: {path: /healthz, port: http}
+            periodSeconds: 15
+          readinessProbe:
+            httpGet: {path: /healthz, port: http}
+            periodSeconds: 5
+          volumeMounts:
+            - {name: tmp, mountPath: /tmp}
+            - {name: config, mountPath: /etc/nginx/nginx.conf, subPath: nginx.conf, readOnly: true}
+      volumes:
+        - name: tmp
+          emptyDir: {sizeLimit: 64Mi}
+        - name: config
+          configMap: {name: ledgerflow-nginx}
+
+---
+# Source: ledgerflow/templates/edge.yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ledgerflow-backend
+spec:
+  scaleTargetRef: {apiVersion: apps/v1, kind: Deployment, name: ledgerflow-backend}
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: {type: Utilization, averageUtilization: 70}
+  behavior:
+    scaleDown: {stabilizationWindowSeconds: 300}
+
+---
+# Source: ledgerflow/templates/edge.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ledgerflow
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: ["ledgerflow.example.com"]
+      secretName: ledgerflow-tls
+  rules:
+    - host: "ledgerflow.example.com"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ledgerflow-frontend
+                port: {number: 8080}
+---
+# Source: ledgerflow/templates/migration.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ledgerflow-migrate
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 1
+  activeDeadlineSeconds: 300
+  template:
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: migrate
+          image: "ghcr.io/your-organization/ledgerflow-backend:0.1.0"
+          command: [java, '-Dloader.main=com.ledgerflow.MigrationApplication', '-cp', /app/app.jar, org.springframework.boot.loader.launch.PropertiesLauncher]
+          env:
+            - {name: DB_URL, value: "jdbc:postgresql://postgres.example.internal:5432/ledgerflow?sslmode=verify-full"}
+            - name: DB_MIGRATION_USERNAME
+              valueFrom: {secretKeyRef: {name: ledgerflow-migration, key: username}}
+            - name: DB_MIGRATION_PASSWORD
+              valueFrom: {secretKeyRef: {name: ledgerflow-migration, key: password}}
+          resources:
+            requests: {cpu: 100m, memory: 256Mi}
+            limits: {cpu: '1', memory: 512Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          volumeMounts: [{name: tmp, mountPath: /tmp}]
+      volumes:
+        - name: tmp
+          emptyDir: {sizeLimit: 64Mi}
+

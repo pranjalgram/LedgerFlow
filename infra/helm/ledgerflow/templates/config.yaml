@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-config
+data:
+  DB_URL: {{ .Values.database.url | quote }}
+  DB_USERNAME: {{ .Values.database.username | quote }}
+  SPRING_FLYWAY_ENABLED: 'false'
+  JWT_ISSUER: {{ .Values.issuer | quote }}
+  JWT_PRIVATE_KEY: file:/run/keys/jwt-private.pem
+  JWT_PUBLIC_KEY: file:/run/keys/jwt-public.pem
+  EVENTS_ENABLED: 'true'
+  KAFKA_BOOTSTRAP_SERVERS: {{ .Values.kafka.bootstrapServers | quote }}
+  SPRING_KAFKA_PROPERTIES_SECURITY_PROTOCOL: {{ .Values.kafka.securityProtocol | quote }}
+  WEBHOOK_ALLOWED_ORIGINS: {{ .Values.webhookAllowedOrigins | quote }}
+  TRACING_EXPORT_ENABLED: {{ .Values.tracing.enabled | quote }}
+  TRACING_SAMPLE_RATE: {{ .Values.tracing.sampleRate | quote }}
+  OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: {{ .Values.tracing.endpoint | quote }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-nginx
+data:
+  nginx.conf: |
+{{ .Files.Get "files/nginx.conf" | replace "http://backend:8080" (printf "http://%s-backend:8080" .Release.Name) | indent 4 }}

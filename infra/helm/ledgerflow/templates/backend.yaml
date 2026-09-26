@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-backend
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.backend.replicas }}
+  {{- end }}
+  strategy:
+    rollingUpdate: {maxSurge: 1, maxUnavailable: 0}
+  selector:
+    matchLabels: {app: {{ .Release.Name }}-backend}
+  template:
+    metadata:
+      labels: {app: {{ .Release.Name }}-backend}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/config.yaml") . | sha256sum }}
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 60
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: backend
+          image: {{ .Values.backend.image | quote }}
+          ports: [{name: http, containerPort: 8080}]
+          envFrom:
+            - configMapRef: {name: {{ .Release.Name }}-config}
+          env:
+            - name: DB_PASSWORD
+              valueFrom: {secretKeyRef: {name: {{ .Values.runtimeSecret }}, key: db-password}}
+            - name: METRICS_PASSWORD
+              valueFrom: {secretKeyRef: {name: {{ .Values.runtimeSecret }}, key: metrics-password}}
+            - name: WEBHOOK_ENCRYPTION_KEY
+              valueFrom: {secretKeyRef: {name: {{ .Values.runtimeSecret }}, key: webhook-key}}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          resources: {{ toYaml .Values.backend.resources | nindent 12 }}
+          startupProbe:
+            httpGet: {path: /actuator/health/liveness, port: http}
+            periodSeconds: 5
+            failureThreshold: 30
+          livenessProbe:
+            httpGet: {path: /actuator/health/liveness, port: http}
+            periodSeconds: 15
+          readinessProbe:
+            httpGet: {path: /actuator/health/readiness, port: http}
+            periodSeconds: 5
+            timeoutSeconds: 3
+          volumeMounts:
+            - {name: tmp, mountPath: /tmp}
+            - {name: keys, mountPath: /run/keys, readOnly: true}
+      volumes:
+        - name: tmp
+          emptyDir: {sizeLimit: 128Mi}
+        - name: keys
+          secret:
+            secretName: {{ .Values.runtimeSecret }}
+            defaultMode: 0440
+            items:
+              - {key: jwt-private.pem, path: jwt-private.pem}
+              - {key: jwt-public.pem, path: jwt-public.pem}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-backend
+spec:
+  selector: {app: {{ .Release.Name }}-backend}
+  ports: [{name: http, port: 8080, targetPort: http}]
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Release.Name }}-backend
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels: {app: {{ .Release.Name }}-backend}
