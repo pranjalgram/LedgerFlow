@@ -31,6 +31,8 @@ spec:
           envFrom:
             - configMapRef: {name: {{ .Release.Name }}-config}
           env:
+            - name: REDIS_PASSWORD
+              valueFrom: {secretKeyRef: {name: {{ .Values.runtimeSecret }}, key: redis-password}}
             - name: DB_PASSWORD
               valueFrom: {secretKeyRef: {name: {{ .Values.runtimeSecret }}, key: db-password}}
             - name: METRICS_PASSWORD

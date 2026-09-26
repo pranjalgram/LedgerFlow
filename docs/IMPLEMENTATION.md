@@ -86,3 +86,7 @@ Backend build passed with 9 unit/architecture tests and 40 PostgreSQL/Kafka inte
 ## Phase 12 verification
 
 Non-root backend/frontend images built from source; separate Flyway container migrated through V10 before API startup. Compose health checks passed and Chromium's financial flow passed through packaged Nginx. Live Prometheus scrape and Tempo-exported HTTP/ledger/outbox spans were verified. Backend build passed (9 unit/architecture, 40 integration tests). Helm lint/template passed; no Kubernetes cluster context is available, so rollout remains unverified. Clean-volume packaged E2E is configured in CI; remote CI has not run here. See DEPLOYMENT.md for secret/bootstrap/managed-service prerequisites.
+
+## Phase 13 verification
+
+Backend build passed with 9 unit/architecture and 44 integration tests, including real Redis atomic concurrency, TTL expiry, verified-principal isolation, HTTP throttling and paused-Redis recovery. Packaged financial Chromium flow passed with Redis limiting enabled. k6 2.3.0 eight-second smoke passed all checks; no capacity claim. Read-only PostgreSQL EXPLAIN ANALYZE output is retained with small-fixture limitations. Existing Kafka/webhook retries remain bounded and idempotent; no blind financial retry or speculative index was added. See REDIS.md and PERFORMANCE.md.

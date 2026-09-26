@@ -17,6 +17,10 @@ kafka:
   bootstrapServers: kafka.example.internal:9093
   securityProtocol: SSL
 runtimeSecret: ledgerflow-runtime
+redis:
+  host: redis.example.internal
+  port: 6379
+  tls: true
 migrationSecret: ledgerflow-migration
 issuer: https://ledgerflow.example.com
 webhookAllowedOrigins: ''

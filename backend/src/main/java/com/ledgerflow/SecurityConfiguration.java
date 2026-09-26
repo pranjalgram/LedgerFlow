@@ -20,7 +20,8 @@ import org.springframework.security.web.SecurityFilterChain;
 class SecurityConfiguration {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http, JwtDecoder decoder,
-            @Qualifier("apiKeyAuthenticationManager") AuthenticationManager apiKeys) throws Exception {
+            @Qualifier("apiKeyAuthenticationManager") AuthenticationManager apiKeys,
+            com.ledgerflow.ratelimit.RateLimiter limiter, tools.jackson.databind.ObjectMapper json) throws Exception {
         var converter = new JwtAuthenticationConverter();
         converter.setJwtGrantedAuthoritiesConverter(jwt -> List.of(new SimpleGrantedAuthority("DASHBOARD")));
         var provider = new JwtAuthenticationProvider(decoder);
@@ -31,6 +32,8 @@ class SecurityConfiguration {
                 // All credentials are explicit bearer/body tokens; no cookies or session authentication.
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterAfter(new com.ledgerflow.ratelimit.RateLimitFilter(limiter, json, true),
+                        org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/register", "/api/v1/auth/login",

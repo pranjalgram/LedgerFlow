@@ -19,6 +19,10 @@ data:
   DB_URL: "jdbc:postgresql://postgres.example.internal:5432/ledgerflow?sslmode=verify-full"
   DB_USERNAME: "ledgerflow_app"
   SPRING_FLYWAY_ENABLED: 'false'
+  REDIS_HOST: "redis.example.internal"
+  REDIS_PORT: "6379"
+  SPRING_DATA_REDIS_SSL_ENABLED: "true"
+  RATE_LIMIT_ENABLED: 'true'
   JWT_ISSUER: "https://ledgerflow.example.com"
   JWT_PRIVATE_KEY: file:/run/keys/jwt-private.pem
   JWT_PUBLIC_KEY: file:/run/keys/jwt-public.pem
@@ -112,7 +116,7 @@ spec:
     metadata:
       labels: {app: ledgerflow-backend}
       annotations:
-        checksum/config: a59bcaa1b5934c81e5c4ba7d1734b67c7206f467571304596881ada4e65753be
+        checksum/config: a6d1b0ff0a2cd723bee5536537eab41948ce2812cf0589bab9f78d7c28a6e83f
     spec:
       automountServiceAccountToken: false
       terminationGracePeriodSeconds: 60
@@ -129,6 +133,8 @@ spec:
           envFrom:
             - configMapRef: {name: ledgerflow-config}
           env:
+            - name: REDIS_PASSWORD
+              valueFrom: {secretKeyRef: {name: ledgerflow-runtime, key: redis-password}}
             - name: DB_PASSWORD
               valueFrom: {secretKeyRef: {name: ledgerflow-runtime, key: db-password}}
             - name: METRICS_PASSWORD
@@ -185,7 +191,7 @@ spec:
     metadata:
       labels: {app: ledgerflow-frontend}
       annotations:
-        checksum/config: a59bcaa1b5934c81e5c4ba7d1734b67c7206f467571304596881ada4e65753be
+        checksum/config: a6d1b0ff0a2cd723bee5536537eab41948ce2812cf0589bab9f78d7c28a6e83f
     spec:
       automountServiceAccountToken: false
       securityContext:

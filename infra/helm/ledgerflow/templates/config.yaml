@@ -6,6 +6,10 @@ data:
   DB_URL: {{ .Values.database.url | quote }}
   DB_USERNAME: {{ .Values.database.username | quote }}
   SPRING_FLYWAY_ENABLED: 'false'
+  REDIS_HOST: {{ .Values.redis.host | quote }}
+  REDIS_PORT: {{ .Values.redis.port | quote }}
+  SPRING_DATA_REDIS_SSL_ENABLED: {{ .Values.redis.tls | quote }}
+  RATE_LIMIT_ENABLED: 'true'
   JWT_ISSUER: {{ .Values.issuer | quote }}
   JWT_PRIVATE_KEY: file:/run/keys/jwt-private.pem
   JWT_PUBLIC_KEY: file:/run/keys/jwt-public.pem

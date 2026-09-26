@@ -16,7 +16,7 @@ SPRING_PROFILES_ACTIVE=demo EVENTS_ENABLED=true docker compose --profile app --p
 
 On PowerShell set `$env:SPRING_PROFILES_ACTIVE='demo'` and `$env:EVENTS_ENABLED='true'` before the Compose command. Generators refuse to overwrite existing credentials. On Linux bind-mounted key/config files must be readable by container UID 10001; use a dedicated group with ACLs or a secret store. The isolated CI runner uses world-readable ephemeral files and is destroyed after the job; do not copy that permission choice to a shared host.
 
-Open http://localhost:8088. The browser sends same-origin requests through Nginx to the API. Register a merchant, create CUSTOMER and SETTLEMENT wallets, fund the customer wallet, and create a transfer/payment. Funding exists only with the demo profile. No account credentials are hardcoded. The PostgreSQL-only profile remains the lightweight host-development workflow.
+Open http://localhost:8088. The browser sends same-origin requests through Nginx to the API. Register a merchant, create CUSTOMER and SETTLEMENT wallets, fund the customer wallet, and create a transfer/payment. Funding exists only with the demo profile. No account credentials are hardcoded. The PostgreSQL-only profile remains available for trusted host development with RATE_LIMIT_ENABLED=false; normal operation also requires Redis.
 
 The migration container must exit successfully before the backend starts. It uses the same built jar with a standalone Flyway entry point: no web server, workers or Kafka startup. The API disables Flyway and receives only its restricted runtime database password. Runtime and frontend use non-root UIDs, read-only filesystems, dropped capabilities and writable /tmp only. Frontend CSP permits inline styles because the chart library uses them, while scripts require the same origin. API/health limits are enforced by the backend; Nginx permits only the minimal readiness route under /actuator.
 
@@ -32,11 +32,11 @@ Build and push application images to a registry you control; set backend.image/f
 
 | Secret (default name) | Required keys |
 | --- | --- |
-| ledgerflow-runtime | db-password, metrics-password, webhook-key (base64-encoded 32-byte AES key as text), jwt-private.pem, jwt-public.pem |
+| ledgerflow-runtime | db-password, redis-password, metrics-password, webhook-key (base64-encoded 32-byte AES key as text), jwt-private.pem, jwt-public.pem |
 | ledgerflow-migration | username, password |
 | ledgerflow-tls | tls.crt, tls.key |
 
-Configure database.url/username, kafka.bootstrapServers/securityProtocol, issuer, webhookAllowedOrigins and optional tracing in the values file. Supply PostgreSQL server trust material appropriate to the managed provider; verify-full requires trusted roots. The example Kafka setting uses server TLS; clusters requiring SASL/mTLS need provider-specific secret mounts and Spring Kafka properties added before deployment. No public plaintext broker or invented credentials are provided.
+Configure database.url/username, redis.host/port/tls, kafka.bootstrapServers/securityProtocol, issuer, webhookAllowedOrigins and optional tracing in the values file. Supply PostgreSQL server trust material appropriate to the managed provider; verify-full requires trusted roots. The example Kafka setting uses server TLS; clusters requiring SASL/mTLS need provider-specific secret mounts and Spring Kafka properties added before deployment. No public plaintext broker or invented credentials are provided.
 
 Database bootstrap must create the ledgerflow_runtime and ledgerflow_ledger_owner NOLOGIN roles, and a ledgerflow_app login inheriting runtime. The migration identity needs schema creation/alteration and permission to assign security-definer functions to ledgerflow_ledger_owner. Local Docker uses the database owner; managed-provider administrators must grant appropriate membership/schema privileges for migrations. Do not grant these privileges to the runtime login. Test this provisioning on the actual managed provider before rollout.
 

@@ -28,6 +28,7 @@ import tools.jackson.databind.ObjectMapper;
 
 @Tag("integration")
 @ActiveProfiles("demo")
+@org.springframework.test.context.TestPropertySource(properties = "ledgerflow.rate-limit.enabled=false")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 abstract class IntegrationSupport {
     static final PostgreSQLContainer DATABASE = new PostgreSQLContainer("postgres:18.6");

@@ -1,0 +1,93 @@
+BEGIN
+                                                               QUERY PLAN                                                               
+----------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.14..8.16 rows=1 width=98) (actual time=0.007..0.007 rows=1.00 loops=1)
+   Buffers: shared hit=2
+   ->  Index Scan using payments_by_merchant on payment  (cost=0.14..8.16 rows=1 width=98) (actual time=0.006..0.006 rows=1.00 loops=1)
+         Index Cond: (merchant_id = '4296c191-cbaa-4934-b664-f5807b351f12'::uuid)
+         Index Searches: 1
+         Buffers: shared hit=2
+ Planning:
+   Buffers: shared hit=10
+ Planning Time: 0.058 ms
+ Execution Time: 0.037 ms
+(10 rows)
+
+                                                              QUERY PLAN                                                              
+--------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.14..8.16 rows=1 width=98) (actual time=0.007..0.007 rows=0.00 loops=1)
+   Buffers: shared hit=1
+   ->  Index Scan using payments_by_status on payment  (cost=0.14..8.16 rows=1 width=98) (actual time=0.007..0.007 rows=0.00 loops=1)
+         Index Cond: ((merchant_id = '4296c191-cbaa-4934-b664-f5807b351f12'::uuid) AND ((status)::text = 'SUCCEEDED'::text))
+         Index Searches: 1
+         Buffers: shared hit=1
+ Planning Time: 0.036 ms
+ Execution Time: 0.012 ms
+(8 rows)
+
+                                                                        QUERY PLAN                                                                         
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=8.22..8.23 rows=1 width=44) (actual time=0.026..0.026 rows=1.00 loops=1)
+   Sort Key: daily.bucket_day DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=5
+   ->  Subquery Scan on daily  (cost=8.18..8.21 rows=1 width=44) (actual time=0.016..0.017 rows=1.00 loops=1)
+         Buffers: shared hit=2
+         ->  GroupAggregate  (cost=8.18..8.21 rows=1 width=44) (actual time=0.016..0.016 rows=1.00 loops=1)
+               Group Key: (((payment.created_at AT TIME ZONE 'UTC'::text))::date)
+               Buffers: shared hit=2
+               ->  Sort  (cost=8.18..8.18 rows=1 width=78) (actual time=0.011..0.012 rows=1.00 loops=1)
+                     Sort Key: (((payment.created_at AT TIME ZONE 'UTC'::text))::date)
+                     Sort Method: quicksort  Memory: 25kB
+                     Buffers: shared hit=2
+                     ->  Index Scan using payments_by_reference on payment  (cost=0.14..8.17 rows=1 width=78) (actual time=0.007..0.007 rows=1.00 loops=1)
+                           Index Cond: (merchant_id = '4296c191-cbaa-4934-b664-f5807b351f12'::uuid)
+                           Index Searches: 1
+                           Buffers: shared hit=2
+ Planning:
+   Buffers: shared hit=28
+ Planning Time: 0.087 ms
+ Execution Time: 0.045 ms
+(21 rows)
+
+                                                                                QUERY PLAN                                                                                 
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=19.51..19.55 rows=1 width=76) (actual time=0.089..0.096 rows=10.00 loops=1)
+   Buffers: shared hit=32
+   ->  WindowAgg  (cost=19.51..19.55 rows=1 width=76) (actual time=0.089..0.095 rows=10.00 loops=1)
+         Window: w1 AS (PARTITION BY e.account_id ORDER BY t.posted_at, t.id, e.ordinal ROWS UNBOUNDED PRECEDING)
+         Storage: Memory  Maximum Storage: 17kB
+         Buffers: shared hit=32
+         ->  Sort  (cost=19.51..19.51 rows=1 width=88) (actual time=0.081..0.082 rows=10.00 loops=1)
+               Sort Key: e.account_id, t.posted_at, t.id, e.ordinal
+               Sort Method: quicksort  Memory: 25kB
+               Buffers: shared hit=32
+               ->  Nested Loop  (cost=5.66..19.50 rows=1 width=88) (actual time=0.054..0.063 rows=10.00 loops=1)
+                     Buffers: shared hit=23
+                     ->  Hash Join  (cost=5.51..12.63 rows=1 width=80) (actual time=0.046..0.049 rows=10.00 loops=1)
+                           Hash Cond: (e.account_id = a.id)
+                           Buffers: shared hit=3
+                           ->  Bitmap Heap Scan on ledger_entry e  (cost=4.17..11.28 rows=3 width=72) (actual time=0.011..0.012 rows=10.00 loops=1)
+                                 Recheck Cond: (merchant_id = '4296c191-cbaa-4934-b664-f5807b351f12'::uuid)
+                                 Heap Blocks: exact=1
+                                 Buffers: shared hit=2
+                                 ->  Bitmap Index Scan on entries_by_account  (cost=0.00..4.17 rows=3 width=0) (actual time=0.005..0.005 rows=10.00 loops=1)
+                                       Index Cond: (merchant_id = '4296c191-cbaa-4934-b664-f5807b351f12'::uuid)
+                                       Index Searches: 1
+                                       Buffers: shared hit=1
+                           ->  Hash  (cost=1.15..1.15 rows=15 width=24) (actual time=0.014..0.014 rows=15.00 loops=1)
+                                 Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                 Buffers: shared hit=1
+                                 ->  Seq Scan on ledger_account a  (cost=0.00..1.15 rows=15 width=24) (actual time=0.010..0.010 rows=15.00 loops=1)
+                                       Buffers: shared hit=1
+                     ->  Index Scan using ledger_transaction_pkey on ledger_transaction t  (cost=0.15..6.83 rows=1 width=24) (actual time=0.001..0.001 rows=1.00 loops=10)
+                           Index Cond: (id = e.transaction_id)
+                           Index Searches: 10
+                           Buffers: shared hit=20
+ Planning:
+   Buffers: shared hit=277 dirtied=1
+ Planning Time: 0.930 ms
+ Execution Time: 0.144 ms
+(36 rows)
+
+ROLLBACK
